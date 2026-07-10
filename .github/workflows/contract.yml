@@ -45,3 +45,7 @@ jobs:
         run: clojure -M test/query_contract.clj
       - name: Verify coverage/registry.edn stays consistent with data/seed
         run: clojure -M test/coverage_registry_contract.clj
+      - name: Report sources.lock.edn pin freshness (informational, non-blocking)
+        run: npx nbb bin/check-lock-freshness.cljs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
