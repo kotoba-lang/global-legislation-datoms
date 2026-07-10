@@ -41,4 +41,17 @@
   (let [consumer (first (:connections/consumers (edn/read-string (slurp "connections/actors.edn"))))]
     (read-only/require-provenance! consumer)
     (assert (seq (read-only/query db {:queries queries} :wave-1-sources)) "read-only consumer adapter missing"))
+
+  ;; ── negative paths: adapters.read-only is a security/contract boundary -- assert it actually
+  ;; REJECTS malformed input, not only that it accepts a well-formed one (the block above only
+  ;; ever exercised the happy path).
+  (letfn [(throws? [f] (try (f) false (catch Throwable _ true)))]
+    (assert (throws? #(read-only/require-provenance! {:consumer/id "no-provenance-field"}))
+            "require-provenance! must reject a consumer with no :consumer/required-provenance key")
+    (assert (throws? #(read-only/require-provenance! {:consumer/id "empty-provenance"
+                                                        :consumer/required-provenance []}))
+            "require-provenance! must reject a consumer with an empty :consumer/required-provenance")
+    (assert (throws? #(read-only/query db {:queries queries} :nonexistent-query-id))
+            "query must reject an unpublished/unknown query-id, not silently return nil"))
+
   (println {:status :ok :entities (count tx) :queries (count queries)}))
