@@ -7,7 +7,7 @@
   {:criterion :datascript-query-verification :status :met :evidence "queries/examples.edn (11 queries) を Datascript db-with で実行"}
   {:criterion :kotoba-eavt-export :status :met :evidence "data/world-legislation.kotoba.edn"}
   {:criterion :consumer-contracts :status :met :evidence "connections/actors.edn"}
-  {:criterion :read-only-consumer-adapter :status :met :evidence "adapters/read_only.clj + connections/actors.edn"}
+  {:criterion :read-only-consumer-adapter :status :met :evidence "adapters/read_only.clj + connections/actors.edn. test/query_contract.clj previously only exercised the HAPPY path (a well-formed consumer, a published query-id); as of 2026-07-10 it also asserts the two rejection paths that make this a real contract boundary: require-provenance! throws on a consumer missing/emptying :consumer/required-provenance, and query throws on an unpublished query-id rather than silently returning nil."}
   {:criterion :coverage-quality-gate :status :met :evidence "data/quality-report.edn + test/query_contract.clj"}
   {:criterion :seed-provenance-verification :status :met :evidence "bin/verify-seed-provenance.cljs — every legal-source row checked against an allow-listed monorepo doc, the prohibited-vendor list, and (for :general-legal-knowledge rows) a mandatory :license-basis"}
   {:criterion :ci-contract-validation :status :met :evidence "GitHub Actions: seed-provenance verification → CI-lock verification → deterministic build (against locked ooyake checkout) → generated diff gate → Datascript contract test → coverage-registry consistency test"}
