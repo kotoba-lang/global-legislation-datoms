@@ -46,5 +46,33 @@
   {:args []
    :query [:find [?national ?international]
            :where [?e :hanrei.coverage/national-jurisdictions ?national]
-                  [?e :hanrei.coverage/international-courts ?international]]}}
+                  [?e :hanrei.coverage/international-courts ?international]]}
+  :hanrei-international-courts-coverage
+  {:args []
+   :query [:find ?id ?court-code ?name
+           :in $
+           :where [?e :legal-source/id ?id]
+                  [?e :legal-source/hanrei-court-code ?court-code]
+                  [?e :legal-source/name ?name]]}
+  :court-for-jurisdiction
+  {:args [?jurisdiction]
+   :query [:find ?name ?official-url
+           :in $ ?jurisdiction
+           :where [?c :court/jurisdiction ?jurisdiction]
+                  [?c :court/name ?name]
+                  [?c :court/official-url ?official-url]]}
+  :general-legal-knowledge-graded-sources
+  {:args []
+   :query [:find ?id ?license ?basis
+           :in $
+           :where [?e :legal-source/id ?id]
+                  [?e :legal-source/license-provenance :general-legal-knowledge]
+                  [?e :legal-source/license ?license]
+                  [?e :legal-source/license-basis ?basis]]}
+  :legislature-and-court-count-by-jurisdiction-kind
+  {:args []
+   :query [:find ?kind (count ?j)
+           :in $
+           :where [?j :jurisdiction/code _]
+                  [?j :jurisdiction/kind ?kind]]}}
  :usage "(require '[datascript.core :as d] '[clojure.edn :as edn]) (def db (d/db-with (d/empty-db (edn/read-string (slurp \"schema/legislation.edn\"))) (edn/read-string (slurp \"data/datascript-tx.edn\")))) (d/q (:query (get-in (edn/read-string (slurp \"queries/examples.edn\")) [:queries :sources-by-jurisdiction])) db \"JPN\")"}

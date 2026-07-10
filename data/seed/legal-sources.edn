@@ -2,7 +2,8 @@
 ;;
 ;; Every row is a *catalog* entry (jurisdiction × source × license × sensor
 ;; readiness), NOT ingested full text. Grounded exclusively in facts already
-;; on record elsewhere in the com-junkawasaki monorepo:
+;; on record elsewhere in the com-junkawasaki monorepo, or (for license
+;; grading only, see below) in well-established black-letter copyright law:
 ;;
 ;; - :doc/adr-2605262800   — etzhayyim/root 90-docs/adr/2605262800-public-data-legal-corpus-ipfs-ingestion.md
 ;;                           (per-jurisdiction source list + Tier-A/B/C license grading)
@@ -10,6 +11,9 @@
 ;;                           src/kotodama/organism/sensors/legal/README.md (wave-1 5-anchor table)
 ;; - :doc/hanrei-claude-md — etzhayyim/root 60-apps/etzhayyim-project-hanrei/CLAUDE.md
 ;;                           (explicit e-Gov / kanpo / courts.go.jp URLs)
+;; - :doc/hanrei-actor-manifest — etzhayyim/com-etzhayyim-hanrei/actor-manifest.jsonld
+;;                           (convoSystemPrompt: "83 jurisdictions ... 8 international
+;;                           courts: ICJ/ICC/ECHR/CJEU/IACHR/ACHPR/ITLOS/WTO AB")
 ;;
 ;; :legal-source/url-provenance distinguishes a URL string that appears
 ;; verbatim in one of those docs (:doc-literal) from a well-known official
@@ -17,11 +21,27 @@
 ;; but was not independently re-fetched here (:well-known-domain — consistent
 ;; with the passive-only, no-live-scrape invariant of ADR-2605262400 §7).
 ;;
+;; :legal-source/license-provenance is the SAME distinction applied to
+;; license grading. :doc-literal means the license string was quoted
+;; verbatim from an in-repo doc (the 5 wave-1 anchors + fr-legifrance).
+;; :general-legal-knowledge means the tier was assigned from well-established
+;; copyright-law facts (a specific statute's public-works carve-out, or a
+;; known org copyright policy) rather than an in-repo doc — every such row
+;; carries :legal-source/license-basis citing the specific legal basis, so a
+;; reader can independently verify or dispute the grading. This is a
+;; materially weaker provenance claim than :doc-literal and MUST NOT be
+;; conflated with it.
+;;
 ;; :legal-source/status is :status/cataloged for every row without exception:
 ;; per ADR-2605262800, R0 shipped only the ADR + sensor scaffold + fetcher
 ;; path-reserves; W1 (the 5 wave-1 anchors) had not shipped actual ingested
 ;; text as of this build. This dataset is the pre-ingestion registry, not a
 ;; text corpus.
+;;
+;; :legal-source/hanrei-court-code tags the 8 rows that correspond 1:1 to
+;; hanrei's own "8 international courts" list (ICJ/ICC/ECHR/CJEU/IACHR/
+;; ACHPR/ITLOS/WTO AB per :doc/hanrei-actor-manifest), so a query can confirm
+;; full coverage of that specific set independent of this catalog's own ids.
 
 {:sources
  [;; ---- wave-1 anchors (kotodama-py sensors/legal README, exact license/tier) ----
@@ -31,6 +51,7 @@
    :legal-source/name "US Code (Office of Law Revision Counsel)"
    :legal-source/url "https://uscode.house.gov" :legal-source/url-provenance :well-known-domain
    :legal-source/license "public domain" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :doc-literal
    :legal-source/sensor :sensor/us-usc-sensor :legal-source/wave :wave/w1
    :legal-source/status :status/cataloged :legal-source/provenance-doc :doc/kotodama-py-legal-sensors-readme}
 
@@ -40,6 +61,7 @@
    :legal-source/name "Code of Federal Regulations (GPO)"
    :legal-source/url "https://www.ecfr.gov" :legal-source/url-provenance :well-known-domain
    :legal-source/license "public domain" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :doc-literal
    :legal-source/sensor :sensor/us-cfr-sensor :legal-source/wave :wave/w1
    :legal-source/status :status/cataloged :legal-source/provenance-doc :doc/kotodama-py-legal-sensors-readme}
 
@@ -49,6 +71,7 @@
    :legal-source/name "e-Gov 法令 API"
    :legal-source/url "https://laws.e-gov.go.jp/api/1/" :legal-source/url-provenance :doc-literal
    :legal-source/license "CC-BY 4.0" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :doc-literal
    :legal-source/sensor :sensor/jp-egov-sensor :legal-source/wave :wave/w1
    :legal-source/status :status/cataloged :legal-source/provenance-doc :doc/hanrei-claude-md}
 
@@ -58,6 +81,7 @@
    :legal-source/name "EUR-Lex consolidated treaties + regulations + directives"
    :legal-source/url "https://eur-lex.europa.eu" :legal-source/url-provenance :well-known-domain
    :legal-source/license "free reuse with citation" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :doc-literal
    :legal-source/sensor :sensor/eu-eurlex-sensor :legal-source/wave :wave/w1
    :legal-source/status :status/cataloged :legal-source/provenance-doc :doc/kotodama-py-legal-sensors-readme}
 
@@ -67,6 +91,7 @@
    :legal-source/name "legislation.gov.uk"
    :legal-source/url "https://www.legislation.gov.uk" :legal-source/url-provenance :doc-literal
    :legal-source/license "OGL v3.0" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :doc-literal
    :legal-source/sensor :sensor/uk-legislation-sensor :legal-source/wave :wave/w1
    :legal-source/status :status/cataloged :legal-source/provenance-doc :doc/kotodama-py-legal-sensors-readme}
 
@@ -94,7 +119,9 @@
    :legal-source/family :legal.family/case
    :legal-source/name "CourtListener"
    :legal-source/url "https://www.courtlistener.com" :legal-source/url-provenance :well-known-domain
-   :legal-source/license-tier :tier/unspecified
+   :legal-source/license "public domain (US federal court records)" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "17 U.S.C. §105 — works of the U.S. federal government, including federal court opinions, are not subject to copyright protection"
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/adr-2605262800}
 
@@ -102,7 +129,9 @@
    :legal-source/jurisdiction "USA" :legal-source/jurisdiction-kind :national
    :legal-source/family :legal.family/case
    :legal-source/name "RECAP/PACER bulk"
-   :legal-source/license-tier :tier/unspecified
+   :legal-source/license "public domain (US federal court records)" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "17 U.S.C. §105 — federal court records are public domain; PACER's per-page access fee is a distinct access cost, not a copyright restriction"
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/adr-2605262800}
 
@@ -121,6 +150,7 @@
    :legal-source/name "CJEU case law"
    :legal-source/url "https://curia.europa.eu" :legal-source/url-provenance :well-known-domain
    :legal-source/license-tier :tier/a
+   :legal-source/hanrei-court-code :CJEU
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/adr-2605262800}
 
@@ -129,7 +159,9 @@
    :legal-source/family :legal.family/case
    :legal-source/name "裁判所 判例 (courts.go.jp)"
    :legal-source/url "https://www.courts.go.jp/app/hanrei_jp/search1" :legal-source/url-provenance :doc-literal
-   :legal-source/license-tier :tier/unspecified
+   :legal-source/license "public domain (Japan Copyright Act Art. 13)" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "Japan Copyright Act (著作権法) Art. 13 excludes laws, notices, and court judgments from copyright protection"
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/hanrei-claude-md}
 
@@ -138,7 +170,9 @@
    :legal-source/family :legal.family/gazette
    :legal-source/name "官報 (Official Gazette)"
    :legal-source/url "https://kanpou.npb.go.jp" :legal-source/url-provenance :doc-literal
-   :legal-source/license-tier :tier/unspecified
+   :legal-source/license "public domain (Japan Copyright Act Art. 13)" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "Japan Copyright Act Art. 13 excludes official notices published in the Official Gazette from copyright protection"
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/hanrei-claude-md}
 
@@ -165,7 +199,10 @@
    :legal-source/family :legal.family/case
    :legal-source/name "HUDOC / ECHR"
    :legal-source/url "https://hudoc.echr.coe.int" :legal-source/url-provenance :well-known-domain
-   :legal-source/license-tier :tier/unspecified
+   :legal-source/license "reuse permitted with attribution (Council of Europe copyright policy)" :legal-source/license-tier :tier/b
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "Council of Europe copyright policy permits non-commercial reproduction of HUDOC case-law with source attribution; not unrestricted public domain"
+   :legal-source/hanrei-court-code :ECHR
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/adr-2605262800}
 
@@ -183,7 +220,9 @@
    :legal-source/family :legal.family/treaty
    :legal-source/name "UNCITRAL"
    :legal-source/url "https://uncitral.un.org" :legal-source/url-provenance :well-known-domain
-   :legal-source/license-tier :tier/unspecified
+   :legal-source/license "reuse permitted with attribution (UN copyright policy)" :legal-source/license-tier :tier/b
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "UN copyright policy (ST/AI/189 and successors) permits non-commercial reuse of UN documents with attribution; the UN retains copyright"
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/adr-2605262800}
 
@@ -192,7 +231,9 @@
    :legal-source/family :legal.family/treaty
    :legal-source/name "WIPO Lex"
    :legal-source/url "https://wipolex.wipo.int" :legal-source/url-provenance :well-known-domain
-   :legal-source/license-tier :tier/unspecified
+   :legal-source/license "reuse permitted for informational purposes (WIPO copyright policy)" :legal-source/license-tier :tier/b
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "WIPO retains copyright on WIPO Lex content; the database is provided for public informational reuse, not under an open license"
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/adr-2605262800}
 
@@ -201,7 +242,9 @@
    :legal-source/family :legal.family/treaty
    :legal-source/name "Hague Conference on Private International Law (HCCH)"
    :legal-source/url "https://www.hcch.net" :legal-source/url-provenance :well-known-domain
-   :legal-source/license-tier :tier/unspecified
+   :legal-source/license "reuse permitted with attribution (HCCH copyright policy)" :legal-source/license-tier :tier/b
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "Adopted treaty texts are generally freely reproducible; HCCH's own database/commentary content follows standard intergovernmental-body reuse terms, not unrestricted public domain"
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/adr-2605262800}
 
@@ -210,7 +253,10 @@
    :legal-source/family :legal.family/case
    :legal-source/name "International Criminal Court documents"
    :legal-source/url "https://www.icc-cpi.int" :legal-source/url-provenance :well-known-domain
-   :legal-source/license-tier :tier/unspecified
+   :legal-source/license "public court records; reuse terms not fully open-licensed" :legal-source/license-tier :tier/b
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "ICC judicial records are public, but as an international organization the Court is not covered by any national public-domain-for-government-works statute; no verified open license was found"
+   :legal-source/hanrei-court-code :ICC
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/adr-2605262800}
 
@@ -219,7 +265,9 @@
    :legal-source/family :legal.family/gazette
    :legal-source/name "Bundesgesetzblatt"
    :legal-source/url "https://www.recht.bund.de" :legal-source/url-provenance :well-known-domain
-   :legal-source/license-tier :tier/unspecified
+   :legal-source/license "public domain (amtliche Werke)" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "German Copyright Act (UrhG) §5 excludes official works (amtliche Werke) — laws, decrees, and official notices — from copyright protection"
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/adr-2605262800}
 
@@ -229,6 +277,7 @@
    :legal-source/name "Légifrance (Étalab)"
    :legal-source/url "https://www.legifrance.gouv.fr" :legal-source/url-provenance :well-known-domain
    :legal-source/license "Étalab" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :doc-literal
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/adr-2605262800}
 
@@ -237,7 +286,9 @@
    :legal-source/family :legal.family/statute
    :legal-source/name "Normattiva"
    :legal-source/url "https://www.normattiva.it" :legal-source/url-provenance :well-known-domain
-   :legal-source/license-tier :tier/unspecified
+   :legal-source/license "public domain (atti ufficiali dello Stato)" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "Italian Copyright Law (Legge 633/1941) Art. 5 excludes official texts of laws and decrees from copyright protection"
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/adr-2605262800}
 
@@ -246,7 +297,9 @@
    :legal-source/family :legal.family/statute
    :legal-source/name "Korean Law Information Center (국가법령정보센터)"
    :legal-source/url "https://www.law.go.kr" :legal-source/url-provenance :well-known-domain
-   :legal-source/license-tier :tier/unspecified
+   :legal-source/license "public domain (statutes excluded from copyright)" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "Korean Copyright Act (저작권법) Art. 7 excludes statutes, ordinances, treaties, and court judgments from copyright protection"
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/adr-2605262800}
 
@@ -264,7 +317,9 @@
    :legal-source/family :legal.family/statute
    :legal-source/name "Brazilian Federal Senate (legislation)"
    :legal-source/url "https://www.senado.leg.br" :legal-source/url-provenance :well-known-domain
-   :legal-source/license-tier :tier/unspecified
+   :legal-source/license "public domain (official texts of laws)" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "Brazilian Copyright Law (Lei 9.610/98) Art. 8 excludes official texts of laws, decrees, and regulations from copyright protection"
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/adr-2605262800}
 
@@ -273,7 +328,9 @@
    :legal-source/family :legal.family/case
    :legal-source/name "Superior Tribunal de Justiça (STJ)"
    :legal-source/url "https://www.stj.jus.br" :legal-source/url-provenance :well-known-domain
-   :legal-source/license-tier :tier/unspecified
+   :legal-source/license "public domain (official texts of judicial decisions)" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "Brazilian Copyright Law (Lei 9.610/98) Art. 8 excludes official texts of judicial decisions from copyright protection"
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/adr-2605262800}
 
@@ -282,7 +339,72 @@
    :legal-source/family :legal.family/statute
    :legal-source/name "NPC statutes"
    :legal-source/url "http://www.npc.gov.cn/" :legal-source/url-provenance :doc-literal
-   :legal-source/license-tier :tier/unspecified
+   :legal-source/license "public domain (laws/regulations excluded from copyright)" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "PRC Copyright Law Art. 5 excludes laws, regulations, and official documents of state organs from copyright protection — this is a pure copyright-law determination, independent of and does not resolve the governance scrutiny flag below"
    :legal-source/wave :wave/future :legal-source/status :status/cataloged
    :legal-source/provenance-doc :doc/adr-2605262800
-   :legal-source/scrutiny "Charter Rider §2(g) state-aligned scrutiny; ingested as authoritative-source-of-record but flagged for non-substitution doctrine"}]}
+   :legal-source/scrutiny "Charter Rider §2(g) state-aligned scrutiny; ingested as authoritative-source-of-record but flagged for non-substitution doctrine"}
+
+  ;; ---- hanrei's "8 international courts" set (ICJ/ICC/ECHR/CJEU/IACHR/ACHPR/ITLOS/WTO AB) ----
+  ;; ICC / ECHR / CJEU are already above (intl-icc-documents / coe-hudoc / eu-cjeu),
+  ;; each tagged :legal-source/hanrei-court-code. These 5 complete the set.
+  {:legal-source/id "intl-icj"
+   :legal-source/jurisdiction "ICJ" :legal-source/jurisdiction-kind :international-court
+   :legal-source/family :legal.family/case
+   :legal-source/name "International Court of Justice"
+   :legal-source/url "https://www.icj-cij.org" :legal-source/url-provenance :well-known-domain
+   :legal-source/license "public judgments; reuse terms not fully open-licensed" :legal-source/license-tier :tier/b
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "The ICJ is the UN's principal judicial organ; judgments are public but not covered by a national public-domain carve-out, and no verified open license was found"
+   :legal-source/hanrei-court-code :ICJ
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/hanrei-actor-manifest}
+
+  {:legal-source/id "intl-iachr"
+   :legal-source/jurisdiction "IACHR" :legal-source/jurisdiction-kind :international-court
+   :legal-source/family :legal.family/case
+   :legal-source/name "Inter-American Court of Human Rights"
+   :legal-source/url "https://www.corteidh.or.cr" :legal-source/url-provenance :well-known-domain
+   :legal-source/license "public judgments; reuse terms not fully open-licensed" :legal-source/license-tier :tier/b
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "Judgments are public via the Court's own site; no verified open license was found"
+   :legal-source/hanrei-court-code :IACHR
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/hanrei-actor-manifest}
+
+  {:legal-source/id "intl-achpr"
+   :legal-source/jurisdiction "ACHPR" :legal-source/jurisdiction-kind :international-court
+   :legal-source/family :legal.family/case
+   :legal-source/name "African Court on Human and Peoples' Rights"
+   :legal-source/url "https://www.african-court.org" :legal-source/url-provenance :well-known-domain
+   :legal-source/license "public judgments; reuse terms not fully open-licensed" :legal-source/license-tier :tier/b
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "Judgments are public via the Court's own site; no verified open license was found"
+   :legal-source/hanrei-court-code :ACHPR
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/hanrei-actor-manifest}
+
+  {:legal-source/id "intl-itlos"
+   :legal-source/jurisdiction "ITLOS" :legal-source/jurisdiction-kind :international-court
+   :legal-source/family :legal.family/case
+   :legal-source/name "International Tribunal for the Law of the Sea"
+   :legal-source/url "https://www.itlos.org" :legal-source/url-provenance :well-known-domain
+   :legal-source/license "public judgments; reuse terms not fully open-licensed" :legal-source/license-tier :tier/b
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "Judgments are public via the Tribunal's own site; no verified open license was found"
+   :legal-source/hanrei-court-code :ITLOS
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/hanrei-actor-manifest}
+
+  {:legal-source/id "intl-wto-appellate-body"
+   :legal-source/jurisdiction "WTOAB" :legal-source/jurisdiction-kind :international-court
+   :legal-source/family :legal.family/case
+   :legal-source/name "WTO Appellate Body"
+   :legal-source/url "https://www.wto.org" :legal-source/url-provenance :well-known-domain
+   :legal-source/license "public reports; reuse terms not fully open-licensed" :legal-source/license-tier :tier/b
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "Dispute-settlement reports are public via the WTO's own site; no verified open license was found"
+   :legal-source/hanrei-court-code :WTOAB
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/hanrei-actor-manifest}]}

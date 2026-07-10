@@ -14,6 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: etzhayyim/com-etzhayyim-ooyake
+          ref: c35c46aabd258d66f7544c03d1a6a8c0a6ffb91a
+          path: .sources/com-etzhayyim-ooyake
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -28,8 +33,10 @@ jobs:
           cli: latest
       - name: Verify seed provenance against allow-listed docs + prohibited-vendor list
         run: npx nbb bin/verify-seed-provenance.cljs
-      - name: Rebuild committed projections from data/seed
-        run: npx nbb bin/build.cljs
+      - name: Verify CI source lock
+        run: npx nbb bin/verify-ci-lock.cljs
+      - name: Rebuild committed projections from data/seed + locked ooyake revision
+        run: npx nbb bin/build.cljs .sources
       - name: Build coverage-quality report
         run: npx nbb bin/build-quality-report.cljs
       - name: Reject stale generated datoms

@@ -7,11 +7,14 @@
  :legal-source/url-provenance {:db/index true}
  :legal-source/license {}
  :legal-source/license-tier {:db/index true}
+ :legal-source/license-provenance {:db/index true}
+ :legal-source/license-basis {}
  :legal-source/sensor {:db/index true}
  :legal-source/wave {:db/index true}
  :legal-source/status {:db/index true}
  :legal-source/provenance-doc {}
  :legal-source/scrutiny {}
+ :legal-source/hanrei-court-code {:db/index true}
 
  :legislature/id {:db/unique :db.unique/identity}
  :legislature/jurisdiction {:db/index true}
@@ -20,6 +23,14 @@
  :legislature/wikidata {}
  :legislature/last-verified {}
  :legislature/ooyake-source-id {}
+
+ :court/id {:db/unique :db.unique/identity}
+ :court/jurisdiction {:db/index true}
+ :court/name {}
+ :court/official-url {}
+ :court/wikidata {}
+ :court/last-verified {}
+ :court/ooyake-source-id {}
 
  :jurisdiction/code {:db/unique :db.unique/identity}
  :jurisdiction/name {}
