@@ -41,6 +41,12 @@ honestly-scoped rebuild of both classes together:
    hanrei's named international courts are present. Snapshot rebuild and
    projection use NBB; the Datascript compatibility test uses the canonical
    Clojure Datascript library (same split as `global-energy-datoms`).
+8. Verify `coverage/registry.edn` — a hand-maintained overview, NOT
+   part of the `bin/build.cljs` pipeline — has not silently drifted from
+   `data/seed/legal-sources.edn`: its jurisdiction-code set must match
+   exactly, and every jurisdiction's `:coverage/wave-1-sources` must be
+   exactly that jurisdiction's `wave/w1` rows, no more and no less
+   (`test/coverage_registry_contract.clj`).
 
 Growing the `legal-source` catalog (adding a jurisdiction, correcting a
 URL, adding a family, grading a license) is a normal PR that edits
