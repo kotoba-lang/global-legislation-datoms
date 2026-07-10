@@ -4,6 +4,17 @@
 
 (def fs (js/require "fs"))
 (defn slurp* [p] (.toString (.readFileSync fs p)))
+(defn stabilize
+  "See bin/build.cljs for why: makes pr-str output independent of the host
+   runtime's PersistentHashMap iteration order."
+  [x]
+  (cond
+    (map? x) (reduce-kv (fn [acc k v] (assoc acc k (stabilize v)))
+                         (sorted-map-by #(compare (str %1) (str %2)))
+                         x)
+    (vector? x) (mapv stabilize x)
+    (sequential? x) (map stabilize x)
+    :else x))
 (defn legal-source? [e] (contains? e :legal-source/id))
 (defn legislature? [e] (contains? e :legislature/id))
 (defn court? [e] (contains? e :court/id))
@@ -50,7 +61,7 @@
                                    ;; ingest text. If this ever goes non-zero without a matching
                                    ;; README/ADR rewrite, the scope-disclosure has silently rotted.
                                    :maximum-ingested-full-text 0}}]
-  (.writeFileSync fs "data/quality-report.edn" (str (pr-str report) "\n"))
+  (.writeFileSync fs "data/quality-report.edn" (str (pr-str (stabilize report)) "\n"))
   (println (str "quality report: " (:quality/legal-sources report) " legal sources, "
                 (:quality/legislatures report) " legislatures, "
                 (:quality/courts report) " courts, "

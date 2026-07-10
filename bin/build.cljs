@@ -27,9 +27,28 @@
 (def fs (js/require "fs"))
 (def source-root (or (first *command-line-args*) ".."))
 (defn slurp* [p] (.toString (.readFileSync fs p)))
-(defn write! [p x] (.writeFileSync fs p (str (pr-str x) "\n")))
 (defn read-edn [p] (edn/parse-string (slurp* p)))
 (defn path [& xs] (str/join "/" xs))
+
+(defn stabilize
+  "Recursively rewrites maps as string-key-sorted maps so pr-str output is
+   byte-stable regardless of the host runtime's PersistentHashMap iteration
+   order (which is NOT guaranteed identical across ClojureScript/nbb
+   versions once a map exceeds the small-map array-map threshold -- verified
+   2026-07-10: nbb 1.3.204 vs 1.4.208 printed the same data in a different
+   key order for >8-key maps). Without this, CI's byte-diff freshness gate
+   is only as reliable as every contributor's local nbb version matching
+   the CI-pinned one exactly, which is fragile."
+  [x]
+  (cond
+    (map? x) (reduce-kv (fn [acc k v] (assoc acc k (stabilize v)))
+                         (sorted-map-by #(compare (str %1) (str %2)))
+                         x)
+    (vector? x) (mapv stabilize x)
+    (sequential? x) (map stabilize x)
+    :else x))
+
+(defn write! [p x] (.writeFileSync fs p (str (pr-str (stabilize x)) "\n")))
 
 (def ooyake-root (path source-root "com-etzhayyim-ooyake"))
 
