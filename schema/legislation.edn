@@ -1,0 +1,41 @@
+{:legal-source/id {:db/unique :db.unique/identity}
+ :legal-source/jurisdiction {:db/index true}
+ :legal-source/jurisdiction-kind {:db/index true}
+ :legal-source/family {:db/index true}
+ :legal-source/name {}
+ :legal-source/url {}
+ :legal-source/url-provenance {:db/index true}
+ :legal-source/license {}
+ :legal-source/license-tier {:db/index true}
+ :legal-source/sensor {:db/index true}
+ :legal-source/wave {:db/index true}
+ :legal-source/status {:db/index true}
+ :legal-source/provenance-doc {}
+ :legal-source/scrutiny {}
+
+ :legislature/id {:db/unique :db.unique/identity}
+ :legislature/jurisdiction {:db/index true}
+ :legislature/name {}
+ :legislature/official-url {}
+ :legislature/wikidata {}
+ :legislature/last-verified {}
+ :legislature/ooyake-source-id {}
+
+ :jurisdiction/code {:db/unique :db.unique/identity}
+ :jurisdiction/name {}
+ :jurisdiction/kind {:db/index true}
+
+ :prohibited-source/id {:db/unique :db.unique/identity}
+ :prohibited-source/name {}
+ :prohibited-source/reason {}
+
+ :hanrei.coverage/id {:db/unique :db.unique/identity}
+ :hanrei.coverage/as-of {}
+ :hanrei.coverage/national-jurisdictions {}
+ :hanrei.coverage/international-courts {}
+ :hanrei.coverage/legal-system-civil-law {}
+ :hanrei.coverage/legal-system-common-law {}
+ :hanrei.coverage/legal-system-islamic-law {}
+ :hanrei.coverage/legal-system-mixed {}
+ :hanrei.coverage/jp-court-dids {}
+ :hanrei.coverage/source-repo {}}

@@ -1,0 +1,23 @@
+{:coverage/as-of "2026-07-10"
+ :coverage/jurisdictions
+ [{:jurisdiction/code "USA" :coverage/families [:legal.family/statute :legal.family/gazette :legal.family/case] :coverage/wave-1-sources ["us-usc" "us-cfr"]}
+  {:jurisdiction/code "GBR" :coverage/families [:legal.family/statute :legal.family/case] :coverage/wave-1-sources ["uk-legislation"]}
+  {:jurisdiction/code "JPN" :coverage/families [:legal.family/statute :legal.family/case :legal.family/gazette] :coverage/wave-1-sources ["jp-egov"]}
+  {:jurisdiction/code "EU" :coverage/families [:legal.family/statute :legal.family/case] :coverage/wave-1-sources ["eu-eurlex"]}
+  {:jurisdiction/code "CAN" :coverage/families [:legal.family/case] :coverage/wave-1-sources []}
+  {:jurisdiction/code "AUS" :coverage/families [:legal.family/case] :coverage/wave-1-sources []}
+  {:jurisdiction/code "DEU" :coverage/families [:legal.family/gazette] :coverage/wave-1-sources []}
+  {:jurisdiction/code "FRA" :coverage/families [:legal.family/statute] :coverage/wave-1-sources []}
+  {:jurisdiction/code "ITA" :coverage/families [:legal.family/statute] :coverage/wave-1-sources []}
+  {:jurisdiction/code "KOR" :coverage/families [:legal.family/statute] :coverage/wave-1-sources []}
+  {:jurisdiction/code "IND" :coverage/families [:legal.family/case] :coverage/wave-1-sources []}
+  {:jurisdiction/code "BRA" :coverage/families [:legal.family/statute :legal.family/case] :coverage/wave-1-sources []}
+  {:jurisdiction/code "CHN" :coverage/families [:legal.family/statute] :coverage/wave-1-sources [] :coverage/scrutiny :charter-rider-2g}
+  {:jurisdiction/code "COE" :coverage/families [:legal.family/case] :coverage/wave-1-sources []}
+  {:jurisdiction/code "UN" :coverage/families [:legal.family/treaty] :coverage/wave-1-sources []}
+  {:jurisdiction/code "ICC" :coverage/families [:legal.family/case] :coverage/wave-1-sources []}]
+ :coverage/join-policy
+ {:jurisdiction [:legal-source/jurisdiction :legislature/jurisdiction]
+  :rule "legal-source と legislature は :jurisdiction コード（ISO3、または EU/COE/UN/ICC の超国家コード）でのみ機械的に結合する。国名の文字列一致では結合しない。"}
+ :coverage/scope-limit
+ "この catalog がカバーするのは「どの法域にどの一次ソースが存在し、どのライセンスで、どの sensor family が対応するか」という登録層のみ。条文・判決の全文テキストは一切含まない（ADR-2605262800 R0/W1 未出荷）。"}

@@ -1,0 +1,21 @@
+;; global-legislation-datoms — jurisdiction code reference table.
+;; Codes are the union of every :legal-source/jurisdiction /
+;; :legislature/jurisdiction value used elsewhere in this dataset.
+
+{:jurisdictions
+ [{:jurisdiction/code "USA" :jurisdiction/name "United States" :jurisdiction/kind :national}
+  {:jurisdiction/code "GBR" :jurisdiction/name "United Kingdom" :jurisdiction/kind :national}
+  {:jurisdiction/code "JPN" :jurisdiction/name "Japan" :jurisdiction/kind :national}
+  {:jurisdiction/code "CAN" :jurisdiction/name "Canada" :jurisdiction/kind :national}
+  {:jurisdiction/code "AUS" :jurisdiction/name "Australia" :jurisdiction/kind :national}
+  {:jurisdiction/code "DEU" :jurisdiction/name "Germany" :jurisdiction/kind :national}
+  {:jurisdiction/code "FRA" :jurisdiction/name "France" :jurisdiction/kind :national}
+  {:jurisdiction/code "ITA" :jurisdiction/name "Italy" :jurisdiction/kind :national}
+  {:jurisdiction/code "KOR" :jurisdiction/name "South Korea" :jurisdiction/kind :national}
+  {:jurisdiction/code "IND" :jurisdiction/name "India" :jurisdiction/kind :national}
+  {:jurisdiction/code "BRA" :jurisdiction/name "Brazil" :jurisdiction/kind :national}
+  {:jurisdiction/code "CHN" :jurisdiction/name "China" :jurisdiction/kind :national}
+  {:jurisdiction/code "EU" :jurisdiction/name "European Union" :jurisdiction/kind :supranational}
+  {:jurisdiction/code "COE" :jurisdiction/name "Council of Europe" :jurisdiction/kind :supranational}
+  {:jurisdiction/code "UN" :jurisdiction/name "United Nations" :jurisdiction/kind :supranational}
+  {:jurisdiction/code "ICC" :jurisdiction/name "International Criminal Court" :jurisdiction/kind :international-court}]}

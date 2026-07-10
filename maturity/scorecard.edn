@@ -1,0 +1,16 @@
+{:maturity/as-of "2026-07-10"
+ :maturity/level :r1-catalog-layer
+ :maturity/criteria
+ [{:criterion :semantic-schema :status :met :evidence "schema/legislation.edn"}
+  {:criterion :provenance-per-row :status :met :evidence [:legal-source/provenance-doc :legal-source/url-provenance]}
+  {:criterion :datascript-query-verification :status :met :evidence "queries/examples.edn を Datascript db-with で実行"}
+  {:criterion :kotoba-eavt-export :status :met :evidence "data/world-legislation.kotoba.edn"}
+  {:criterion :consumer-contracts :status :met :evidence "connections/actors.edn"}
+  {:criterion :read-only-consumer-adapter :status :met :evidence "adapters/read_only.clj + connections/actors.edn"}
+  {:criterion :coverage-quality-gate :status :met :evidence "data/quality-report.edn + test/query_contract.clj"}
+  {:criterion :seed-provenance-verification :status :met :evidence "bin/verify-seed-provenance.cljs — every row checked against an allow-listed monorepo doc + against the prohibited-vendor list"}
+  {:criterion :ci-contract-validation :status :met :evidence "GitHub Actions: seed-provenance verification → deterministic build → generated diff gate → Datascript contract test"}
+  {:criterion :raw-source-integrity :status :not-applicable :evidence "no upstream DataLad raw dataset exists yet for world legislation/case-law text — this repo's inputs are data/seed/*.edn hand-curated from already-reviewed monorepo docs, not fetched files. Revisit once ADR-2605262800 W1 ships real per-jurisdiction raw source datasets."}
+  {:criterion :locked-source-revisions :status :not-applicable :evidence "no sibling source repos to pin (see raw-source-integrity)"}
+  {:criterion :automated-upstream-drift-report :status :not-applicable :evidence "no live upstream URL to poll — the catalog itself is the artifact, sourced from static in-repo docs, not a live feed"}
+  {:criterion :full-text-corpus :status :explicitly-out-of-scope :evidence "data/quality-report.edn :quality/ingested-full-text is a hard-pinned 0; see ADR-2605262800 for the separate raw-bytes/full-text layer (still R0, not yet shipped)"}]}

@@ -1,0 +1,50 @@
+{:queries
+ {:wave-1-sources
+  {:args []
+   :query [:find ?id ?name
+           :in $
+           :where [?e :legal-source/id ?id]
+                  [?e :legal-source/wave :wave/w1]
+                  [?e :legal-source/name ?name]]}
+  :tier-a-sources
+  {:args []
+   :query [:find ?id ?jurisdiction
+           :in $
+           :where [?e :legal-source/id ?id]
+                  [?e :legal-source/license-tier :tier/a]
+                  [?e :legal-source/jurisdiction ?jurisdiction]]}
+  :sources-by-jurisdiction
+  {:args [?jurisdiction]
+   :query [:find ?id ?name ?family
+           :in $ ?jurisdiction
+           :where [?e :legal-source/jurisdiction ?jurisdiction]
+                  [?e :legal-source/id ?id]
+                  [?e :legal-source/name ?name]
+                  [?e :legal-source/family ?family]]}
+  :prohibited-sources
+  {:args []
+   :query [:find ?name
+           :in $
+           :where [?e :prohibited-source/id _]
+                  [?e :prohibited-source/name ?name]]}
+  :cn-scrutiny-flagged
+  {:args []
+   :query [:find ?id ?scrutiny
+           :in $
+           :where [?e :legal-source/id ?id]
+                  [?e :legal-source/scrutiny ?scrutiny]]}
+  :legislature-for-source-jurisdiction
+  {:args []
+   :query [:find ?source-id ?legislature-name ?official-url
+           :in $
+           :where [?s :legal-source/id ?source-id]
+                  [?s :legal-source/jurisdiction ?jurisdiction]
+                  [?l :legislature/jurisdiction ?jurisdiction]
+                  [?l :legislature/name ?legislature-name]
+                  [?l :legislature/official-url ?official-url]]}
+  :hanrei-coverage-snapshot
+  {:args []
+   :query [:find [?national ?international]
+           :where [?e :hanrei.coverage/national-jurisdictions ?national]
+                  [?e :hanrei.coverage/international-courts ?international]]}}
+ :usage "(require '[datascript.core :as d] '[clojure.edn :as edn]) (def db (d/db-with (d/empty-db (edn/read-string (slurp \"schema/legislation.edn\"))) (edn/read-string (slurp \"data/datascript-tx.edn\")))) (d/q (:query (get-in (edn/read-string (slurp \"queries/examples.edn\")) [:queries :sources-by-jurisdiction])) db \"JPN\")"}

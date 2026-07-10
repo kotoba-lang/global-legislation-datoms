@@ -1,0 +1,16 @@
+;; global-legislation-datoms — explicit ingestion-prohibited vendor list.
+;;
+;; Verbatim from ADR-2605262800 + kotodama-py sensors/legal/README.md
+;; "PROHIBITED upstream sources (Charter Rider §2(e) + §2(c))". Modeled as
+;; first-class queryable rows (not just prose) so a consumer can assert
+;; "this candidate source is not on the prohibited list" mechanically.
+
+{:prohibited-sources
+ [{:prohibited-source/id "prohibited-westlaw" :prohibited-source/name "Westlaw"
+   :prohibited-source/reason "closed query-tracking infrastructure could expose member legal posture to a commercial party (Charter Rider §2(e) anti-gatekeeping + §2(c) covert-ops vendor concern)"}
+  {:prohibited-source/id "prohibited-lexisnexis" :prohibited-source/name "LexisNexis"
+   :prohibited-source/reason "closed query-tracking infrastructure could expose member legal posture to a commercial party (Charter Rider §2(e) anti-gatekeeping + §2(c) covert-ops vendor concern)"}
+  {:prohibited-source/id "prohibited-bloomberg-law" :prohibited-source/name "Bloomberg Law"
+   :prohibited-source/reason "closed query-tracking infrastructure could expose member legal posture to a commercial party (Charter Rider §2(e) anti-gatekeeping + §2(c) covert-ops vendor concern)"}
+  {:prohibited-source/id "prohibited-wolters-kluwer" :prohibited-source/name "Wolters Kluwer"
+   :prohibited-source/reason "closed query-tracking infrastructure could expose member legal posture to a commercial party (Charter Rider §2(e) anti-gatekeeping + §2(c) covert-ops vendor concern)"}]}

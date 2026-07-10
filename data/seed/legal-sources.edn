@@ -1,0 +1,288 @@
+;; global-legislation-datoms — hand-curated legal-source catalog.
+;;
+;; Every row is a *catalog* entry (jurisdiction × source × license × sensor
+;; readiness), NOT ingested full text. Grounded exclusively in facts already
+;; on record elsewhere in the com-junkawasaki monorepo:
+;;
+;; - :doc/adr-2605262800   — etzhayyim/root 90-docs/adr/2605262800-public-data-legal-corpus-ipfs-ingestion.md
+;;                           (per-jurisdiction source list + Tier-A/B/C license grading)
+;; - :doc/kotodama-py-legal-sensors-readme — kotoba-lang/kotodama-py
+;;                           src/kotodama/organism/sensors/legal/README.md (wave-1 5-anchor table)
+;; - :doc/hanrei-claude-md — etzhayyim/root 60-apps/etzhayyim-project-hanrei/CLAUDE.md
+;;                           (explicit e-Gov / kanpo / courts.go.jp URLs)
+;;
+;; :legal-source/url-provenance distinguishes a URL string that appears
+;; verbatim in one of those docs (:doc-literal) from a well-known official
+;; government-portal domain that is the obvious referent of a named source
+;; but was not independently re-fetched here (:well-known-domain — consistent
+;; with the passive-only, no-live-scrape invariant of ADR-2605262400 §7).
+;;
+;; :legal-source/status is :status/cataloged for every row without exception:
+;; per ADR-2605262800, R0 shipped only the ADR + sensor scaffold + fetcher
+;; path-reserves; W1 (the 5 wave-1 anchors) had not shipped actual ingested
+;; text as of this build. This dataset is the pre-ingestion registry, not a
+;; text corpus.
+
+{:sources
+ [;; ---- wave-1 anchors (kotodama-py sensors/legal README, exact license/tier) ----
+  {:legal-source/id "us-usc"
+   :legal-source/jurisdiction "USA" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/statute
+   :legal-source/name "US Code (Office of Law Revision Counsel)"
+   :legal-source/url "https://uscode.house.gov" :legal-source/url-provenance :well-known-domain
+   :legal-source/license "public domain" :legal-source/license-tier :tier/a
+   :legal-source/sensor :sensor/us-usc-sensor :legal-source/wave :wave/w1
+   :legal-source/status :status/cataloged :legal-source/provenance-doc :doc/kotodama-py-legal-sensors-readme}
+
+  {:legal-source/id "us-cfr"
+   :legal-source/jurisdiction "USA" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/statute
+   :legal-source/name "Code of Federal Regulations (GPO)"
+   :legal-source/url "https://www.ecfr.gov" :legal-source/url-provenance :well-known-domain
+   :legal-source/license "public domain" :legal-source/license-tier :tier/a
+   :legal-source/sensor :sensor/us-cfr-sensor :legal-source/wave :wave/w1
+   :legal-source/status :status/cataloged :legal-source/provenance-doc :doc/kotodama-py-legal-sensors-readme}
+
+  {:legal-source/id "jp-egov"
+   :legal-source/jurisdiction "JPN" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/statute
+   :legal-source/name "e-Gov 法令 API"
+   :legal-source/url "https://laws.e-gov.go.jp/api/1/" :legal-source/url-provenance :doc-literal
+   :legal-source/license "CC-BY 4.0" :legal-source/license-tier :tier/a
+   :legal-source/sensor :sensor/jp-egov-sensor :legal-source/wave :wave/w1
+   :legal-source/status :status/cataloged :legal-source/provenance-doc :doc/hanrei-claude-md}
+
+  {:legal-source/id "eu-eurlex"
+   :legal-source/jurisdiction "EU" :legal-source/jurisdiction-kind :supranational
+   :legal-source/family :legal.family/statute
+   :legal-source/name "EUR-Lex consolidated treaties + regulations + directives"
+   :legal-source/url "https://eur-lex.europa.eu" :legal-source/url-provenance :well-known-domain
+   :legal-source/license "free reuse with citation" :legal-source/license-tier :tier/a
+   :legal-source/sensor :sensor/eu-eurlex-sensor :legal-source/wave :wave/w1
+   :legal-source/status :status/cataloged :legal-source/provenance-doc :doc/kotodama-py-legal-sensors-readme}
+
+  {:legal-source/id "uk-legislation"
+   :legal-source/jurisdiction "GBR" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/statute
+   :legal-source/name "legislation.gov.uk"
+   :legal-source/url "https://www.legislation.gov.uk" :legal-source/url-provenance :doc-literal
+   :legal-source/license "OGL v3.0" :legal-source/license-tier :tier/a
+   :legal-source/sensor :sensor/uk-legislation-sensor :legal-source/wave :wave/w1
+   :legal-source/status :status/cataloged :legal-source/provenance-doc :doc/kotodama-py-legal-sensors-readme}
+
+  ;; ---- wave-future (named in ADR-2605262800 prose, not yet sensor-scaffolded) ----
+  {:legal-source/id "us-federal-register"
+   :legal-source/jurisdiction "USA" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/gazette
+   :legal-source/name "Federal Register"
+   :legal-source/url "https://www.federalregister.gov" :legal-source/url-provenance :well-known-domain
+   :legal-source/license "public domain" :legal-source/license-tier :tier/a
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "us-caselaw-access-project"
+   :legal-source/jurisdiction "USA" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/case
+   :legal-source/name "Caselaw Access Project"
+   :legal-source/url "https://case.law" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/a
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "us-courtlistener"
+   :legal-source/jurisdiction "USA" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/case
+   :legal-source/name "CourtListener"
+   :legal-source/url "https://www.courtlistener.com" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/unspecified
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "us-recap-pacer"
+   :legal-source/jurisdiction "USA" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/case
+   :legal-source/name "RECAP/PACER bulk"
+   :legal-source/license-tier :tier/unspecified
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "uk-find-case-law"
+   :legal-source/jurisdiction "GBR" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/case
+   :legal-source/name "Find Case Law (The National Archives)"
+   :legal-source/url "https://caselaw.nationalarchives.gov.uk" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/a
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "eu-cjeu"
+   :legal-source/jurisdiction "EU" :legal-source/jurisdiction-kind :supranational
+   :legal-source/family :legal.family/case
+   :legal-source/name "CJEU case law"
+   :legal-source/url "https://curia.europa.eu" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/a
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "jp-courts"
+   :legal-source/jurisdiction "JPN" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/case
+   :legal-source/name "裁判所 判例 (courts.go.jp)"
+   :legal-source/url "https://www.courts.go.jp/app/hanrei_jp/search1" :legal-source/url-provenance :doc-literal
+   :legal-source/license-tier :tier/unspecified
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/hanrei-claude-md}
+
+  {:legal-source/id "jp-kanpo"
+   :legal-source/jurisdiction "JPN" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/gazette
+   :legal-source/name "官報 (Official Gazette)"
+   :legal-source/url "https://kanpou.npb.go.jp" :legal-source/url-provenance :doc-literal
+   :legal-source/license-tier :tier/unspecified
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/hanrei-claude-md}
+
+  {:legal-source/id "ca-canlii"
+   :legal-source/jurisdiction "CAN" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/case
+   :legal-source/name "CanLII"
+   :legal-source/url "https://www.canlii.org" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/b
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "au-austlii"
+   :legal-source/jurisdiction "AUS" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/case
+   :legal-source/name "AustLII"
+   :legal-source/url "https://www.austlii.edu.au" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/b
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "coe-hudoc"
+   :legal-source/jurisdiction "COE" :legal-source/jurisdiction-kind :supranational
+   :legal-source/family :legal.family/case
+   :legal-source/name "HUDOC / ECHR"
+   :legal-source/url "https://hudoc.echr.coe.int" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/unspecified
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "un-treaty-collection"
+   :legal-source/jurisdiction "UN" :legal-source/jurisdiction-kind :supranational
+   :legal-source/family :legal.family/treaty
+   :legal-source/name "UN Treaty Collection"
+   :legal-source/url "https://treaties.un.org" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/a
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "un-uncitral"
+   :legal-source/jurisdiction "UN" :legal-source/jurisdiction-kind :supranational
+   :legal-source/family :legal.family/treaty
+   :legal-source/name "UNCITRAL"
+   :legal-source/url "https://uncitral.un.org" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/unspecified
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "un-wipo-lex"
+   :legal-source/jurisdiction "UN" :legal-source/jurisdiction-kind :supranational
+   :legal-source/family :legal.family/treaty
+   :legal-source/name "WIPO Lex"
+   :legal-source/url "https://wipolex.wipo.int" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/unspecified
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "un-hague-hcch"
+   :legal-source/jurisdiction "UN" :legal-source/jurisdiction-kind :supranational
+   :legal-source/family :legal.family/treaty
+   :legal-source/name "Hague Conference on Private International Law (HCCH)"
+   :legal-source/url "https://www.hcch.net" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/unspecified
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "intl-icc-documents"
+   :legal-source/jurisdiction "ICC" :legal-source/jurisdiction-kind :international-court
+   :legal-source/family :legal.family/case
+   :legal-source/name "International Criminal Court documents"
+   :legal-source/url "https://www.icc-cpi.int" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/unspecified
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "de-bundesgesetzblatt"
+   :legal-source/jurisdiction "DEU" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/gazette
+   :legal-source/name "Bundesgesetzblatt"
+   :legal-source/url "https://www.recht.bund.de" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/unspecified
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "fr-legifrance"
+   :legal-source/jurisdiction "FRA" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/statute
+   :legal-source/name "Légifrance (Étalab)"
+   :legal-source/url "https://www.legifrance.gouv.fr" :legal-source/url-provenance :well-known-domain
+   :legal-source/license "Étalab" :legal-source/license-tier :tier/a
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "it-normattiva"
+   :legal-source/jurisdiction "ITA" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/statute
+   :legal-source/name "Normattiva"
+   :legal-source/url "https://www.normattiva.it" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/unspecified
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "kr-law-go-kr"
+   :legal-source/jurisdiction "KOR" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/statute
+   :legal-source/name "Korean Law Information Center (국가법령정보센터)"
+   :legal-source/url "https://www.law.go.kr" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/unspecified
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "in-indiankanoon"
+   :legal-source/jurisdiction "IND" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/case
+   :legal-source/name "Indian Kanoon"
+   :legal-source/url "https://indiankanoon.org" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/b
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "br-senado"
+   :legal-source/jurisdiction "BRA" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/statute
+   :legal-source/name "Brazilian Federal Senate (legislation)"
+   :legal-source/url "https://www.senado.leg.br" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/unspecified
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "br-stj"
+   :legal-source/jurisdiction "BRA" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/case
+   :legal-source/name "Superior Tribunal de Justiça (STJ)"
+   :legal-source/url "https://www.stj.jus.br" :legal-source/url-provenance :well-known-domain
+   :legal-source/license-tier :tier/unspecified
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800}
+
+  {:legal-source/id "cn-npc-statutes"
+   :legal-source/jurisdiction "CHN" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/statute
+   :legal-source/name "NPC statutes"
+   :legal-source/url "http://www.npc.gov.cn/" :legal-source/url-provenance :doc-literal
+   :legal-source/license-tier :tier/unspecified
+   :legal-source/wave :wave/future :legal-source/status :status/cataloged
+   :legal-source/provenance-doc :doc/adr-2605262800
+   :legal-source/scrutiny "Charter Rider §2(g) state-aligned scrutiny; ingested as authoritative-source-of-record but flagged for non-substitution doctrine"}]}

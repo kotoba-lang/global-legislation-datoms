@@ -1,0 +1,23 @@
+{:connections/version 1
+ :connections/consumers
+ [{:consumer/id "etzhayyim/com-etzhayyim-hanrei"
+   :consumer/kind :case-law-and-legislation-intelligence-actor
+   :consumer/use "83法域の判例・法令収集の対象範囲チェックリストとして読む。hanrei自身のcoverage統計をこのcatalogに折り返す(hanrei-coverage entity)ことでズレを検知する。個々のcase/legislationレコードの一次データはhanrei側が保持し、ここは再ホストしない。"
+   :consumer/query :wave-1-sources
+   :consumer/required-provenance [:legal-source/provenance-doc :legal-source/wave]}
+  {:consumer/id "etzhayyim/root#20-actors/chigiri"
+   :consumer/kind :religious-corp-legal-procedure-actor
+   :consumer/use "ADR-2605262700の手続きセル(dispute_mediation / ip_licensing / tax_receipt / employment_compliance / data_privacy / transparent_force_authorization)が、判例・条文の一次ソース所在とライセンス層を調べる出発点として読む。全文引用にはこのcatalogではなくADR-2605262800のraw-bytes層(未出荷)を要する。"
+   :consumer/query :sources-by-jurisdiction
+   :consumer/required-provenance [:legal-source/jurisdiction :legal-source/license-tier]}
+  {:consumer/id "kotoba-lang/kotodama-py#organism/sensors/legal"
+   :consumer/kind :dataset-sensor-scaffold
+   :consumer/use "5 sensor family (Statute/Case/Treaty/Procedure/Template) が最終的にどのjurisdiction×sourceを取りにいくかの登録簿として読む。sensorの実装(us_usc_sensor.py等)が書かれる際、このcatalogのURLとlicenseを一次configとして引く想定。"
+   :consumer/query :tier-a-sources
+   :consumer/required-provenance [:legal-source/sensor :legal-source/license]}
+  {:consumer/id "any-datascript-or-kotoba-repository"
+   :consumer/kind :open-data-consumer
+   :consumer/use "schema/legislation.edn と data/datascript-tx.edn、または data/world-legislation.kotoba.edn を read-only import する。"
+   :consumer/query :prohibited-sources
+   :consumer/required-provenance [:legal-source/provenance-doc]}]
+ :connections/invariant "このcatalogは法域×ソース×ライセンスの登録層専用。条文・判決の全文を保持・再配布しない。個別の紛争解決・税務判定・雇用分類など高stakes判断の直接入力にしない(一次ソースへの経路として使う)。"}
