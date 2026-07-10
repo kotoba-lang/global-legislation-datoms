@@ -43,3 +43,5 @@ jobs:
         run: git diff --exit-code -- data
       - name: Exercise Datascript query contract
         run: clojure -M test/query_contract.clj
+      - name: Verify coverage/registry.edn stays consistent with data/seed
+        run: clojure -M test/coverage_registry_contract.clj
