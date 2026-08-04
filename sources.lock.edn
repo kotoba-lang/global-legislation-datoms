@@ -24,25 +24,25 @@
   ;; every run rather than letting it pass silently.
   {:source/id :source/jp-egov-elaws
    :repository "etzhayyim/jp.go.e-gov.elaws"
-   :revision "f6898a6e6fe608b7e7c9eab9339febdf49325543"
+   :revision "2e601624979d0692c32bde83ca824b7b86380e3c"
    :source/consumed-by :corpus
    :source/consumes ["index/laws.edn" "index/relations.edn"]
    :source/ci-checkout false}
   {:source/id :source/eu-eur-lex
    :repository "etzhayyim/eu.europa.eur-lex"
-   :revision "97676331520be028d63257af1307fdc0acbe461c"
+   :revision "eed2847ef56d2088e1421ec590c3d67706c3dd15"
    :source/consumed-by :corpus
    :source/consumes ["index/laws.edn" "index/relations.edn"]
    :source/ci-checkout false}
   {:source/id :source/uk-legislation
    :repository "etzhayyim/uk.gov.legislation"
-   :revision "041ecd85ef594d34437d2e4366705813d4766ab6"
+   :revision "c212340d56878bbacc5c12db34b405ad003fb94e"
    :source/consumed-by :corpus
    :source/consumes ["index/laws.edn" "index/relations.edn"]
    :source/ci-checkout false}
   {:source/id :source/us-govinfo
    :repository "etzhayyim/gov.govinfo.bulkdata"
-   :revision "fc4c4f96071d3dde40511f430de7519758947b0e"
+   :revision "49da746ef00539b0e4e1622731779afb786ed7b1"
    :source/consumed-by :corpus
    :source/consumes ["index/laws.edn" "index/relations.edn"]
    :source/ci-checkout false}]}

@@ -60,6 +60,7 @@ URL, adding a family, grading a license) is a normal PR that edits
 files. Growing `:legislature`/`:court`/`:jurisdiction` coverage requires no
 edit here at all — it tracks whatever `etzhayyim/com-etzhayyim-ooyake`
 registers, gated only by advancing `sources.lock.edn`'s pinned revision.
+
 ## The corpus layer, and the CI gap it currently has (ADR-2608041800)
 
 Landing actual ingested legal *text* was explicitly **not** in this repo's
@@ -86,26 +87,26 @@ Insert after the existing `com-etzhayyim-ooyake` checkout step:
       # Corpus source datasets. Only index/ is read; raw/ is git-annex
       # content in B2 and a plain checkout leaves it as dangling symlinks,
       # which is correct — rebuilding this projection must never require
-      # downloading 2.46 GB of statutory text.
+      # downloading 3.43 GB of statutory text.
       - uses: actions/checkout@v4
         with:
           repository: etzhayyim/jp.go.e-gov.elaws
-          ref: f6898a6e6fe608b7e7c9eab9339febdf49325543
+          ref: 2e601624979d0692c32bde83ca824b7b86380e3c
           path: .sources/jp.go.e-gov.elaws
       - uses: actions/checkout@v4
         with:
           repository: etzhayyim/eu.europa.eur-lex
-          ref: 97676331520be028d63257af1307fdc0acbe461c
+          ref: eed2847ef56d2088e1421ec590c3d67706c3dd15
           path: .sources/eu.europa.eur-lex
       - uses: actions/checkout@v4
         with:
           repository: etzhayyim/uk.gov.legislation
-          ref: 041ecd85ef594d34437d2e4366705813d4766ab6
+          ref: c212340d56878bbacc5c12db34b405ad003fb94e
           path: .sources/uk.gov.legislation
       - uses: actions/checkout@v4
         with:
           repository: etzhayyim/gov.govinfo.bulkdata
-          ref: fc4c4f96071d3dde40511f430de7519758947b0e
+          ref: 49da746ef00539b0e4e1622731779afb786ed7b1
           path: .sources/gov.govinfo.bulkdata
 ```
 

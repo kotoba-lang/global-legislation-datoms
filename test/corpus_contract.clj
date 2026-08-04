@@ -67,14 +67,22 @@
       (assert (re-matches #"[0-9a-f]{64}" sha) (str "text sha256 malformed: " sha))
       (assert (pos? bytes)))
 
-    ;; Every JP law must carry a text address: this source's text layer is
-    ;; complete as a class, so a single missing one is a real regression.
-    (let [missing (d/q '[:find (count ?e) .
-                         :where [?e :law/jurisdiction "JPN"]
-                                [?e :law/key _]
-                                [(missing? $ ?e :law.text/sha256)]]
-                       db)]
-      (assert (nil? missing) (str missing " JP laws have no text address")))
+    ;; Exactly 13 JP laws may lack a text address, and no more. e-Gov lists
+    ;; them via /laws but answers /law_data with HTTP 404 code 404004; they
+    ;; are enumerated by id in that dataset's raw/source-catalog.edn
+    ;; :catalog/known-gaps. The number is asserted exactly, not as an upper
+    ;; bound: a *drop* means upstream published something and this projection
+    ;; should be refreshed, and a *rise* means the fetch regressed. Either way
+    ;; someone has to look, which is the point.
+    (let [missing (or (d/q '[:find (count ?e) .
+                             :where [?e :law/jurisdiction "JPN"]
+                                    [?e :law/key _]
+                                    [(missing? $ ?e :law.text/sha256)]]
+                           db)
+                      0)]
+      (assert (= 13 missing)
+              (str missing " JP laws have no text address (expected exactly 13, the ids e-Gov "
+                   "itself 404s -- see jp.go.e-gov.elaws raw/source-catalog.edn :catalog/known-gaps)")))
 
     ;; The dependency graph must actually answer the question it exists for.
     (let [kinds (into {} (run :relation-count-by-kind))]
