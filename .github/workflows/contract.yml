@@ -19,6 +19,30 @@ jobs:
           repository: etzhayyim/com-etzhayyim-ooyake
           ref: c35c46aabd258d66f7544c03d1a6a8c0a6ffb91a
           path: .sources/com-etzhayyim-ooyake
+      # Corpus source datasets (ADR-2608041800). Only their index/ layer is
+      # read. raw/ is git-annex content in B2; a plain checkout leaves it as
+      # dangling symlinks, which is correct and intended -- rebuilding this
+      # projection must never require downloading 2.46 GB of statutory text.
+      - uses: actions/checkout@v4
+        with:
+          repository: etzhayyim/jp.go.e-gov.elaws
+          ref: f6898a6e6fe608b7e7c9eab9339febdf49325543
+          path: .sources/jp.go.e-gov.elaws
+      - uses: actions/checkout@v4
+        with:
+          repository: etzhayyim/eu.europa.eur-lex
+          ref: 97676331520be028d63257af1307fdc0acbe461c
+          path: .sources/eu.europa.eur-lex
+      - uses: actions/checkout@v4
+        with:
+          repository: etzhayyim/uk.gov.legislation
+          ref: 041ecd85ef594d34437d2e4366705813d4766ab6
+          path: .sources/uk.gov.legislation
+      - uses: actions/checkout@v4
+        with:
+          repository: etzhayyim/gov.govinfo.bulkdata
+          ref: fc4c4f96071d3dde40511f430de7519758947b0e
+          path: .sources/gov.govinfo.bulkdata
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -37,12 +61,16 @@ jobs:
         run: npx nbb bin/verify-ci-lock.cljs
       - name: Rebuild committed projections from data/seed + locked ooyake revision
         run: npx nbb bin/build.cljs .sources
+      - name: Rebuild corpus projection from locked source-dataset indexes
+        run: npx nbb bin/build-corpus.cljs .sources
       - name: Build coverage-quality report
         run: npx nbb bin/build-quality-report.cljs
       - name: Reject stale generated datoms
         run: git diff --exit-code -- data
       - name: Exercise Datascript query contract
         run: clojure -M test/query_contract.clj
+      - name: Exercise corpus + dependency-graph query contract
+        run: clojure -M test/corpus_contract.clj
       - name: Verify coverage/registry.edn stays consistent with data/seed
         run: clojure -M test/coverage_registry_contract.clj
       - name: Report sources.lock.edn pin freshness (informational, non-blocking)

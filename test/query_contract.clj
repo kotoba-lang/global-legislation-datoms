@@ -20,8 +20,12 @@
           "a legal-source row still carries :tier/unspecified -- real-world grading regressed")
   (assert (= 8 (:quality/hanrei-international-courts-covered quality))
           "hanrei's 8 international courts (ICJ/ICC/ECHR/CJEU/IACHR/ACHPR/ITLOS/WTO AB) not fully covered")
-  (assert (zero? (:quality/ingested-full-text quality))
-          "scope-disclosure violated: this repo must never claim ingested full text")
+  ;; Was :quality/ingested-full-text. That single number conflated "this repo
+  ;; holds no text" with "no text has been ingested anywhere"; the second
+  ;; stopped being true on 2026-08-04 (ADR-2608041800). The first is still
+  ;; the invariant, and is now named for what it actually asserts.
+  (assert (zero? (:quality/text-bytes-held-here quality))
+          "scope-disclosure violated: this repo projects a corpus, it must never store one")
   (assert (>= (count (run :wave-1-sources)) 5) "wave-1 query coverage missing")
   (assert (>= (count (run :tier-a-sources)) 8) "Tier-A coverage missing")
   (assert (>= (count (run :prohibited-sources)) 4) "prohibited-vendor catalog incomplete")

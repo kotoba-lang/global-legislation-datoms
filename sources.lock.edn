@@ -1,4 +1,32 @@
 {:lock/version 1
- :lock/as-of "2026-07-10"
+ :lock/as-of "2026-08-04"
  :sources
- [{:source/id :source/ooyake :repository "etzhayyim/com-etzhayyim-ooyake" :revision "c35c46aabd258d66f7544c03d1a6a8c0a6ffb91a"}]}
+ [{:source/id :source/ooyake :repository "etzhayyim/com-etzhayyim-ooyake" :revision "c35c46aabd258d66f7544c03d1a6a8c0a6ffb91a"
+   :source/consumed-by :legislature-court-jurisdiction-reference
+   :source/note "This repository was renamed to kotoba-lang/ooyake on or before 2026-08-04. The old path still resolves through GitHub's rename redirect, so CI checkout keeps working, but the pin names a repository that no longer exists under that name. Recorded rather than silently rewritten: re-locking means re-running the build against a new revision and re-committing generated data, which is a separate deliberate step."}
+
+  ;; ---- corpus source datasets (ADR-2608041800) ---------------------------
+  ;; Only the index/ layer of these is consumed. raw/ is git-annex content
+  ;; living in Backblaze B2 and is NOT fetched by this repository or by its
+  ;; CI: a projection must be rebuildable without downloading 2.46 GB of
+  ;; statutory text.
+  {:source/id :source/jp-egov-elaws
+   :repository "etzhayyim/jp.go.e-gov.elaws"
+   :revision "f6898a6e6fe608b7e7c9eab9339febdf49325543"
+   :source/consumed-by :corpus
+   :source/consumes ["index/laws.edn" "index/relations.edn"]}
+  {:source/id :source/eu-eur-lex
+   :repository "etzhayyim/eu.europa.eur-lex"
+   :revision "97676331520be028d63257af1307fdc0acbe461c"
+   :source/consumed-by :corpus
+   :source/consumes ["index/laws.edn" "index/relations.edn"]}
+  {:source/id :source/uk-legislation
+   :repository "etzhayyim/uk.gov.legislation"
+   :revision "041ecd85ef594d34437d2e4366705813d4766ab6"
+   :source/consumed-by :corpus
+   :source/consumes ["index/laws.edn" "index/relations.edn"]}
+  {:source/id :source/us-govinfo
+   :repository "etzhayyim/gov.govinfo.bulkdata"
+   :revision "fc4c4f96071d3dde40511f430de7519758947b0e"
+   :source/consumed-by :corpus
+   :source/consumes ["index/laws.edn" "index/relations.edn"]}]}
