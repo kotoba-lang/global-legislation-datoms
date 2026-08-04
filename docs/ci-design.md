@@ -31,11 +31,17 @@ honestly-scoped rebuild of both classes together:
    `data/seed/*.edn` plus the locked ooyake checkout
    (`bin/build.cljs .sources`).
 5. Fail if generated files differ from committed output.
-6. Rebuild the quality report and assert `:quality/ingested-full-text` is
+6. Rebuild the quality report and assert `:quality/text-bytes-held-here` is
    pinned at `0` — the one invariant this repo must never silently violate,
-   since it is what distinguishes a source *catalog* from a text *corpus* —
-   and that `:quality/tier-unspecified` is `0` (every legal-source row has
-   a real license grading, not a placeholder).
+   since it is what keeps a *projection* of a corpus from turning into a
+   second copy of one — and that `:quality/tier-unspecified` is `0` (every
+   legal-source row has a real license grading, not a placeholder).
+
+   (Through 2026-07-10 this gate was named `:quality/ingested-full-text`.
+   That one number asserted two different things — "this repo holds no
+   text" and "no text has been ingested anywhere" — and the second stopped
+   being true when ADR-2608041800 landed four full-text datasets. The first
+   is still the invariant and is now named for what it actually checks.)
 7. Materialize the Datascript database and run the query/coverage
    invariants in `test/query_contract.clj`, including that all 8 of
    hanrei's named international courts are present. Snapshot rebuild and
@@ -54,6 +60,66 @@ URL, adding a family, grading a license) is a normal PR that edits
 files. Growing `:legislature`/`:court`/`:jurisdiction` coverage requires no
 edit here at all — it tracks whatever `etzhayyim/com-etzhayyim-ooyake`
 registers, gated only by advancing `sources.lock.edn`'s pinned revision.
-Landing actual ingested legal *text* is explicitly **not** in this repo's
-scope — that is the separate raw-bytes/CID layer ADR-2605262800 describes
-and has not yet shipped (R0 only).
+## The corpus layer, and the CI gap it currently has (ADR-2608041800)
+
+Landing actual ingested legal *text* was explicitly **not** in this repo's
+scope until 2026-08-04. It now is — but the text still lives elsewhere.
+`data/corpus/**` is built by `bin/build-corpus.cljs` from the `index/` layer
+of four revision-locked DataLad datasets (`sources.lock.edn`), and each
+`:law` entity addresses its full text by sha256 rather than embedding it.
+
+**These four steps are missing from `.github/workflows/contract.yml` and
+should be added.** The agent that landed the corpus layer could not push
+them: its OAuth token lacks GitHub's `workflow` scope, which blocks a
+`git push` touching a workflow file *and* the Contents API (which answers
+404, not 403). `bin/verify-ci-lock.cljs` reports the four unverified
+sources loudly on every run so this does not fade into the background.
+
+Until it is applied, CI reproduces and gates the **catalog** only;
+`data/corpus/**` is committed output that CI does not independently rebuild,
+and `test/corpus_contract.clj` does not run there (it does pass locally —
+run it before landing any corpus change).
+
+Insert after the existing `com-etzhayyim-ooyake` checkout step:
+
+```yaml
+      # Corpus source datasets. Only index/ is read; raw/ is git-annex
+      # content in B2 and a plain checkout leaves it as dangling symlinks,
+      # which is correct — rebuilding this projection must never require
+      # downloading 2.46 GB of statutory text.
+      - uses: actions/checkout@v4
+        with:
+          repository: etzhayyim/jp.go.e-gov.elaws
+          ref: f6898a6e6fe608b7e7c9eab9339febdf49325543
+          path: .sources/jp.go.e-gov.elaws
+      - uses: actions/checkout@v4
+        with:
+          repository: etzhayyim/eu.europa.eur-lex
+          ref: 97676331520be028d63257af1307fdc0acbe461c
+          path: .sources/eu.europa.eur-lex
+      - uses: actions/checkout@v4
+        with:
+          repository: etzhayyim/uk.gov.legislation
+          ref: 041ecd85ef594d34437d2e4366705813d4766ab6
+          path: .sources/uk.gov.legislation
+      - uses: actions/checkout@v4
+        with:
+          repository: etzhayyim/gov.govinfo.bulkdata
+          ref: fc4c4f96071d3dde40511f430de7519758947b0e
+          path: .sources/gov.govinfo.bulkdata
+```
+
+and these two run steps — the first before `Build coverage-quality report`
+(so the freshness diff covers `data/corpus`), the second after the existing
+query contract:
+
+```yaml
+      - name: Rebuild corpus projection from locked source-dataset indexes
+        run: npx nbb bin/build-corpus.cljs .sources
+      - name: Exercise corpus + dependency-graph query contract
+        run: clojure -M test/corpus_contract.clj
+```
+
+Then flip `:source/ci-checkout` to `true` (or drop the key) on the four
+corpus rows in `sources.lock.edn`; `bin/verify-ci-lock.cljs` will start
+asserting their revisions and stop warning.

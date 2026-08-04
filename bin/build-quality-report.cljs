@@ -21,7 +21,32 @@
 (defn jurisdiction? [e] (contains? e :jurisdiction/code))
 (defn count-where [pred xs] (count (filter pred xs)))
 
+(defn corpus-manifest []
+  (when (.existsSync fs "data/corpus/manifest.edn")
+    (edn/parse-string (slurp* "data/corpus/manifest.edn"))))
+
 (let [entities (edn/parse-string (slurp* "data/datascript-tx.edn"))
+      cm (corpus-manifest)
+      cs (:corpus/sources cm)
+      corpus-summary
+      (if-not cm
+        {:corpus/present? false
+         :corpus/note "data/corpus/manifest.edn absent -- run bin/build-corpus.cljs"}
+        {:corpus/present? true
+         :corpus/sources (count (filter :present? cs))
+         :corpus/sources-declared (count cs)
+         :corpus/laws (reduce + 0 (map :laws cs))
+         :corpus/laws-with-text (reduce + 0 (map #(or (:laws-with-text %) 0) cs))
+         :corpus/relations (reduce + 0 (map :relations cs))
+         :corpus/relations-resolved (reduce + 0 (map #(or (:relations-resolved %) 0) cs))
+         ;; Bytes of statutory text addressed, NOT stored. The distinction is
+         ;; the whole design; a reader who conflates them will think this
+         ;; repository is 2 GB.
+         :corpus/text-bytes-addressed (reduce + 0 (map #(or (:text-bytes %) 0) cs))
+         :corpus/shards (count (:corpus/shards cm))
+         :corpus/by-source (vec (map #(select-keys % [:dataset :jurisdiction :present?
+                                                      :laws :laws-with-text :relations])
+                                     cs))})
       legal-sources (filter legal-source? entities)
       legislatures (filter legislature? entities)
       courts (filter court? entities)
@@ -48,7 +73,18 @@
               :quality/hanrei-international-courts-covered (count-where :legal-source/hanrei-court-code legal-sources)
               :quality/with-url (count-where :legal-source/url legal-sources)
               :quality/doc-literal-url (count-where #(= :doc-literal (:legal-source/url-provenance %)) legal-sources)
-              :quality/ingested-full-text 0
+              ;; ---- corpus layer -------------------------------------------
+              ;; The old invariant here was ":quality/ingested-full-text is
+              ;; pinned to 0", which said two things at once: (a) this
+              ;; repository holds no legislative text, and (b) no legislative
+              ;; text has been ingested anywhere. (a) is still true and still
+              ;; enforced -- as :quality/text-bytes-held-here. (b) stopped
+              ;; being true on 2026-08-04 (ADR-2608041800): four locked
+              ;; DataLad datasets now hold 2.46 GB of it. Keeping the old
+              ;; single number would have forced a choice between lying about
+              ;; (a) and lying about (b).
+              :quality/text-bytes-held-here 0
+              :quality/corpus corpus-summary
               :quality/thresholds {:minimum-legal-sources 30
                                    :minimum-wave-1 5
                                    :minimum-legislatures 150
@@ -57,10 +93,17 @@
                                    :maximum-missing-required-provenance-doc 0
                                    :maximum-missing-required-license-basis 0
                                    :minimum-hanrei-international-courts-covered 8
-                                   ;; Honest invariant: this repo catalogs sources, it does not
-                                   ;; ingest text. If this ever goes non-zero without a matching
-                                   ;; README/ADR rewrite, the scope-disclosure has silently rotted.
-                                   :maximum-ingested-full-text 0}}]
+                                   ;; Honest invariant, narrowed but not weakened: this repo
+                                   ;; PROJECTS a corpus, it does not STORE one. Every :law entity
+                                   ;; addresses its text by sha256 in a locked dataset. If a byte
+                                   ;; of statute ever lands here, this gate fails and the
+                                   ;; catalog/corpus separation has silently rotted.
+                                   :maximum-text-bytes-held-here 0
+                                   ;; The corpus must not quietly empty out: a source whose index
+                                   ;; went missing would otherwise just stop appearing.
+                                   :minimum-corpus-sources 4
+                                   :minimum-corpus-laws 90000
+                                   :minimum-corpus-relations 600000}}]
   (.writeFileSync fs "data/quality-report.edn" (str (pr-str (stabilize report)) "\n"))
   (println (str "quality report: " (:quality/legal-sources report) " legal sources, "
                 (:quality/legislatures report) " legislatures, "

@@ -1,6 +1,9 @@
-{:coverage/as-of "2026-07-10"
+{:coverage/as-of "2026-08-04"
  :coverage/jurisdictions
- [{:jurisdiction/code "USA" :coverage/families [:legal.family/statute :legal.family/gazette :legal.family/case] :coverage/wave-1-sources ["us-usc" "us-cfr"]}
+ ;; us-govinfo added 2026-08-04 (ADR-2608041800). It is a distinct source from
+ ;; us-usc / us-cfr, not a replacement: those are the codified law, this is
+ ;; the legislative pipeline (bills, resolutions, enacted public laws).
+ [{:jurisdiction/code "USA" :coverage/families [:legal.family/statute :legal.family/gazette :legal.family/case] :coverage/wave-1-sources ["us-usc" "us-cfr" "us-govinfo"]}
   {:jurisdiction/code "GBR" :coverage/families [:legal.family/statute :legal.family/case] :coverage/wave-1-sources ["uk-legislation"]}
   {:jurisdiction/code "JPN" :coverage/families [:legal.family/statute :legal.family/case :legal.family/gazette] :coverage/wave-1-sources ["jp-egov"]}
   {:jurisdiction/code "EU" :coverage/families [:legal.family/statute :legal.family/case] :coverage/wave-1-sources ["eu-eurlex"]}

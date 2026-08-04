@@ -32,11 +32,17 @@
 ;; materially weaker provenance claim than :doc-literal and MUST NOT be
 ;; conflated with it.
 ;;
-;; :legal-source/status is :status/cataloged for every row without exception:
-;; per ADR-2605262800, R0 shipped only the ADR + sensor scaffold + fetcher
-;; path-reserves; W1 (the 5 wave-1 anchors) had not shipped actual ingested
-;; text as of this build. This dataset is the pre-ingestion registry, not a
-;; text corpus.
+;; :legal-source/status was :status/cataloged for every row without exception
+;; until 2026-08-04. Per ADR-2605262800, R0 shipped only the ADR + sensor
+;; scaffold + fetcher path-reserves, so this file was the pre-ingestion
+;; registry and nothing more.
+;;
+;; That changed with ADR-2608041800: four sources now have their full text
+;; preserved in locked DataLad datasets and carry :status/ingested plus a
+;; :legal-source/dataset pointing at the repository that holds the bytes.
+;; EVERY OTHER ROW IS STILL :status/cataloged, and the distinction is the
+;; point -- "we know where this source is" and "we have this source" must
+;; never read the same. Query :legal-source/status, not the row's existence.
 ;;
 ;; :legal-source/hanrei-court-code tags the 8 rows that correspond 1:1 to
 ;; hanrei's own "8 international courts" list (ICJ/ICC/ECHR/CJEU/IACHR/
@@ -73,7 +79,10 @@
    :legal-source/license "CC-BY 4.0" :legal-source/license-tier :tier/a
    :legal-source/license-provenance :doc-literal
    :legal-source/sensor :sensor/jp-egov-sensor :legal-source/wave :wave/w1
-   :legal-source/status :status/cataloged :legal-source/provenance-doc :doc/hanrei-claude-md}
+   :legal-source/status :status/ingested
+   :legal-source/dataset "etzhayyim/jp.go.e-gov.elaws"
+   :legal-source/ingested-class "all 9,536 laws served by the e-Gov 法令API v2 (Constitution, Acts, Cabinet/Imperial Orders, Ministerial Ordinances, Rules)"
+   :legal-source/provenance-doc :doc/adr-2608041800}
 
   {:legal-source/id "eu-eurlex"
    :legal-source/jurisdiction "EU" :legal-source/jurisdiction-kind :supranational
@@ -83,7 +92,10 @@
    :legal-source/license "free reuse with citation" :legal-source/license-tier :tier/a
    :legal-source/license-provenance :doc-literal
    :legal-source/sensor :sensor/eu-eurlex-sensor :legal-source/wave :wave/w1
-   :legal-source/status :status/cataloged :legal-source/provenance-doc :doc/kotodama-py-legal-sensors-readme}
+   :legal-source/status :status/ingested
+   :legal-source/dataset "etzhayyim/eu.europa.eur-lex"
+   :legal-source/ingested-class "metadata + structural dependency edges for every act in force; FULL TEXT for directives in force only (1,114) -- regulations have edges but no text yet"
+   :legal-source/provenance-doc :doc/adr-2608041800}
 
   {:legal-source/id "uk-legislation"
    :legal-source/jurisdiction "GBR" :legal-source/jurisdiction-kind :national
@@ -93,7 +105,29 @@
    :legal-source/license "OGL v3.0" :legal-source/license-tier :tier/a
    :legal-source/license-provenance :doc-literal
    :legal-source/sensor :sensor/uk-legislation-sensor :legal-source/wave :wave/w1
-   :legal-source/status :status/cataloged :legal-source/provenance-doc :doc/kotodama-py-legal-sensors-readme}
+   :legal-source/status :status/ingested
+   :legal-source/dataset "etzhayyim/uk.gov.legislation"
+   :legal-source/ingested-class "all 3,267 UK Public General Acts 1801-2026, revised text; UKSI and devolved legislation not ingested"
+   :legal-source/provenance-doc :doc/adr-2608041800}
+
+  ;; Added 2026-08-04 (ADR-2608041800). This is a DIFFERENT source from
+  ;; us-usc / us-cfr above: those are the codified law, this is the
+  ;; legislative pipeline (bills, resolutions, and the public laws they
+  ;; become). uscode.house.gov was unreachable from the ingesting network
+  ;; (measured: 75s timeout), so the codified layer is still cataloged-only.
+  {:legal-source/id "us-govinfo"
+   :legal-source/jurisdiction "USA" :legal-source/jurisdiction-kind :national
+   :legal-source/family :legal.family/statute
+   :legal-source/name "govinfo.gov bulkdata (BILLSTATUS / BILLS / PLAW)"
+   :legal-source/url "https://www.govinfo.gov/bulkdata" :legal-source/url-provenance :well-known-domain
+   :legal-source/license "public domain" :legal-source/license-tier :tier/a
+   :legal-source/license-provenance :general-legal-knowledge
+   :legal-source/license-basis "17 U.S.C. §105 places works of the US federal government outside copyright; govinfo publishes these collections specifically for bulk reuse"
+   :legal-source/wave :wave/w1
+   :legal-source/status :status/ingested
+   :legal-source/dataset "etzhayyim/gov.govinfo.bulkdata"
+   :legal-source/ingested-class "119th Congress: all 18,052 measures with status records and bill-version full text, plus 102 enacted public laws; earlier congresses not ingested"
+   :legal-source/provenance-doc :doc/adr-2608041800}
 
   ;; ---- wave-future (named in ADR-2605262800 prose, not yet sensor-scaffolded) ----
   {:legal-source/id "us-federal-register"

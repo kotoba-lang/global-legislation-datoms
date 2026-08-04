@@ -1,0 +1,120 @@
+;; Corpus + dependency-graph contract (ADR-2608041800).
+;;
+;; Separate from test/query_contract.clj on purpose. That file asserts the
+;; CATALOG contract and must keep passing on a db that has no corpus loaded at
+;; all -- the two layers have different costs and different consumers, and
+;; collapsing them would make every catalog consumer pay for 646k edges.
+;;
+;; What this file is actually trying to catch: a corpus that looks fine by
+;; row count while being useless. A graph with every edge dangling, or with
+;; text addresses that point nowhere, or whose source ids do not join back to
+;; a licence, would pass a naive "did we load 95k rows?" check.
+(require '[clojure.edn :as edn]
+         '[clojure.string :as str]
+         '[datascript.core :as d]
+         '[adapters.read-only :as read-only])
+
+(let [schema (edn/read-string (slurp "schema/legislation.edn"))
+      catalog (edn/read-string (slurp "data/datascript-tx.edn"))
+      quality (edn/read-string (slurp "data/quality-report.edn"))
+      manifest (edn/read-string (slurp "data/corpus/manifest.edn"))
+      queries (:queries (edn/read-string (slurp "queries/examples.edn")))
+      corpus (:quality/corpus quality)
+      thresholds (:quality/thresholds quality)]
+
+  ;; ── manifest-level invariants (cheap, no db needed) ─────────────────────
+  (assert (:corpus/present? corpus) "corpus manifest missing -- run bin/build-corpus.cljs")
+  (assert (>= (:corpus/sources corpus) (:minimum-corpus-sources thresholds))
+          (str "corpus sources shrank to " (:corpus/sources corpus)))
+  (assert (= (:corpus/sources corpus) (:corpus/sources-declared corpus))
+          "a declared corpus source produced no index -- coverage silently thinned")
+  (assert (>= (:corpus/laws corpus) (:minimum-corpus-laws thresholds))
+          (str "corpus law count regressed to " (:corpus/laws corpus)))
+  (assert (>= (:corpus/relations corpus) (:minimum-corpus-relations thresholds))
+          (str "corpus relation count regressed to " (:corpus/relations corpus)))
+  (assert (pos? (:corpus/text-bytes-addressed corpus))
+          "corpus addresses zero bytes of text -- the whole point is the text")
+
+  ;; Every declared shard must exist. Globbing the directory instead would
+  ;; make a missing shard read as "less data", not as a broken projection.
+  (doseq [{:keys [path entities]} (:corpus/shards manifest)]
+    (assert (.exists (java.io.File. ^String path)) (str "declared shard missing: " path))
+    (assert (pos? entities) (str "declared shard is empty: " path)))
+
+  ;; ── graph-level invariants, on ONE source (Japan) ───────────────────────
+  ;; Deliberately not the whole corpus: loading 646k edges into Datascript to
+  ;; assert structural properties would make this test cost minutes for no
+  ;; extra signal. Japan is the source whose text layer is 100% complete, so
+  ;; it is the one where a text-address regression is unambiguous.
+  (let [db (-> (d/db-with (d/empty-db schema) catalog)
+               (read-only/load-corpus "data/corpus/manifest.edn" "jp.go.e-gov.elaws"))
+        run (fn [k & args] (apply read-only/query db {:queries queries} k args))
+        n-laws (run :corpus-loaded?)]
+    (assert (>= n-laws 9000) (str "JP corpus loaded only " n-laws " laws"))
+
+    ;; The constitution is the one row whose identity cannot drift.
+    (let [c (run :law-by-key "jp-elaws:321CONSTITUTION")]
+      (assert (some? c) "jp-elaws:321CONSTITUTION absent from the corpus")
+      (assert (= "日本国憲法" (:law/title c)) (str "constitution title drifted: " (:law/title c)))
+      (assert (= "JPN" (:law/jurisdiction c)))
+      (assert (= :law.kind/constitution (:law/kind c))))
+
+    ;; Text ADDRESS, not text. A row that lost its sha256 has become an
+    ;; unverifiable pointer, which is worse than no pointer.
+    (let [[dataset path sha bytes] (run :text-address "jp-elaws:321CONSTITUTION")]
+      (assert (= "jp.go.e-gov.elaws" dataset))
+      (assert (str/starts-with? path "raw/laws/") (str "unexpected text path: " path))
+      (assert (re-matches #"[0-9a-f]{64}" sha) (str "text sha256 malformed: " sha))
+      (assert (pos? bytes)))
+
+    ;; Every JP law must carry a text address: this source's text layer is
+    ;; complete as a class, so a single missing one is a real regression.
+    (let [missing (d/q '[:find (count ?e) .
+                         :where [?e :law/jurisdiction "JPN"]
+                                [?e :law/key _]
+                                [(missing? $ ?e :law.text/sha256)]]
+                       db)]
+      (assert (nil? missing) (str missing " JP laws have no text address")))
+
+    ;; The dependency graph must actually answer the question it exists for.
+    (let [kinds (into {} (run :relation-count-by-kind))]
+      (assert (pos? (get kinds :law.rel/amends 0)) "no amendment edges in the JP corpus"))
+    (let [amended (run :what-amends "jp-elaws:321CONSTITUTION")]
+      ;; The Constitution of Japan has never been amended. An edge here would
+      ;; mean the amends direction got inverted somewhere -- the exact bug a
+      ;; from/to swap produces, and one that row counts cannot detect.
+      (assert (empty? amended)
+              (str "the Constitution of Japan is recorded as amended by " amended
+                   " -- amends edge direction is inverted")))
+    ;; ...but the corpus as a whole must have amendment targets, or the above
+    ;; assertion is passing for the wrong reason (an empty edge set).
+    (let [some-amended (d/q '[:find (count ?r) .
+                              :where [?r :law.rel/kind :law.rel/amends]
+                                     [?r :law.rel/resolved? true]]
+                            db)]
+      (assert (and some-amended (> some-amended 1000))
+              (str "only " some-amended " resolved amendment edges -- the graph is not connected")))
+
+    ;; Corpus -> catalog join. If :law/source-id stops matching a
+    ;; :legal-source/id, "under what licence may I use this text?" silently
+    ;; returns nothing, and nothing else in this suite would notice.
+    (let [[source-id license tier] (run :corpus-source-license "jp-elaws:321CONSTITUTION")]
+      (assert (= "jp-egov" source-id) (str "corpus source-id does not join to the catalog: " source-id))
+      (assert (some? license))
+      (assert (= :tier/a tier)))
+
+    ;; Ingested sources must say so, and must point at the dataset holding
+    ;; the bytes -- otherwise :status/ingested is an unbacked claim.
+    (let [ingested (d/q '[:find ?id ?dataset
+                          :where [?e :legal-source/status :status/ingested]
+                                 [?e :legal-source/id ?id]
+                                 [?e :legal-source/dataset ?dataset]]
+                        db)]
+      (assert (>= (count ingested) 4)
+              (str "only " (count ingested) " sources are marked :status/ingested with a dataset")))
+
+    (println {:status :ok
+              :corpus-laws (:corpus/laws corpus)
+              :corpus-relations (:corpus/relations corpus)
+              :text-bytes-addressed (:corpus/text-bytes-addressed corpus)
+              :jp-laws-loaded n-laws})))

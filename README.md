@@ -1,15 +1,68 @@
 # global-legislation-datoms
 
-世界の法律・法案の「一次ソース所在地」——どの法域にどんな法律・判例・条約のソースがあり、どのライセンスで、どの sensor family が対応するか——を query 可能な共通 EDN に投影する公開契約です。**条文・判決の全文は保持しません**（スコープの詳細は後述）。
+世界の法令・法案を query 可能な共通 EDN に投影する公開契約です。**2 つの層**があります:
 
-- `schema/legislation.edn` は Datascript の schema。
-- `data/datascript-tx.edn` は Datascript に直接 `db-with` できる entity map 群(567 entities)。
-- `data/world-legislation.kotoba.edn` は Kotoba 互換の `[e a v tx :add]` EAVT。
-- `data/provenance.edn` は各エントリの根拠 doc・件数。
-- `data/quality-report.edn` は wave 別・ライセンス層別・法域別 coverage の決定的レポート。
-- `coverage/registry.edn` は法域ごとの family coverage と安全な結合キー。
-- `connections/actors.edn` は actor／他リポジトリごとの read-only 接続契約。
-- `adapters/read_only.clj` は公開済み query だけを実行する Datascript consumer adapter。
+| 層 | 何を答えるか | 件数 |
+|---|---|---|
+| **catalog** | どの法域にどんな一次ソースがあり、どのライセンスか | 567 entity |
+| **corpus** | 個々の法令そのもの、その全文の所在、**法令間の依存関係** | 95,194 法令 / 646,468 辺 |
+
+**この repository は法令の全文を 1 バイトも持ちません。**全文は出所ごとの DataLad dataset（下記）にあり、各 `:law` entity は `:law.text/sha256` でそれを名指しします。`data/quality-report.edn` の `:quality/text-bytes-held-here` は **0 を上限とする gate** で、この分離が壊れたら CI が落ちます。
+
+## ファイル
+
+- `schema/legislation.edn` — Datascript schema（catalog + corpus）
+- `data/datascript-tx.edn` — catalog 層。`d/db-with` に直接渡せる 567 entity
+- `data/corpus/<dataset>/{laws,relations}-NNN.edn` — corpus 層。source ごと・20,000 entity ごとにシャード
+- `data/corpus/manifest.edn` — シャード一覧（path / sha256 / 件数）と source 別カバレッジ
+- `data/world-legislation.kotoba.edn` — catalog 層の Kotoba 互換 `[e a v tx :add]` EAVT
+- `data/provenance.edn` / `data/quality-report.edn` — 根拠 doc・件数・決定的な品質レポート
+- `coverage/registry.edn` — 法域ごとの family coverage と安全な結合キー
+- `connections/actors.edn` — actor／他リポジトリごとの read-only 接続契約
+- `adapters/read_only.clj` — 公開済み query だけを実行する consumer adapter
+- `queries/examples.edn` — 検証済みの公開 query（依存グラフの再帰的な遡行を含む）
+
+## corpus 層 — 全文の所在と依存グラフ（ADR-2608041800）
+
+全文は 4 つの locked DataLad dataset にあり、`raw/` は git-annex → Backblaze B2、`index/` だけが git 本体にあります。この repository が読むのは `index/` だけです——**投影の再構築に 2.46 GB のダウンロードを要求してはならない**ので。
+
+| dataset | 法域 | 法令 | うち全文あり | 依存辺 |
+|---|---|---|---|---|
+| `etzhayyim/jp.go.e-gov.elaws` | JPN | 9,536 | **9,536**（e-Gov 全件） | 7,793 |
+| `etzhayyim/eu.europa.eur-lex` | EU | 64,237 | 1,114（現行指令全件） | **524,077** |
+| `etzhayyim/uk.gov.legislation` | GBR | 3,267 | **3,267**（UKPGA 全件） | 103,333 |
+| `etzhayyim/gov.govinfo.bulkdata` | USA | 18,154 | 17,964 | 11,265 |
+
+**カバレッジは 4 法域であって「全世界」ではありません。** 198 法域の議会・最高裁の台帳は catalog 層に既にあるので、次の法域を足す作業は `bin/build-corpus.cljs` の `datasets` に 1 行足すことに縮んでいます。各 dataset が取っていないもの（EU の規則本文、UK の UKSI と委譲立法、US の第118議会以前と US Code、JP の判例）は、各 dataset の `raw/source-catalog.edn` の `:catalog/known-gaps` に**名指しで**記録してあります——不在から推測させないために。
+
+### 依存辺
+
+辺は `:law.rel/{from,to,kind}` を持つ独立 entity で、端点は **string** です（`:db.type/ref` ではない）。辺は日常的に「この投影に無い法令」を指す——何十年も前に吸収された改正法や、廃止されたこと自体が記録する価値のある法令——ので、ref にするとそういう辺は transact に失敗するか空 entity を黙って生成します。`:law.rel/resolved?` が「相手がこの投影にいるか」を述べるので、消費者が推測する必要はありません。
+
+種別: `amends` / `repeals` / `implicitly-repeals` / `based-on` / `completes` / `corrects` / `codified-as` / `cites` / `became-law` / `identical-measure` / `companion-measure` / `procedurally-related` / `related-measure`。
+
+**すべて上流が構造化データとして述べている事実だけ**で、本文の自然言語解析による推定は入れていません。
+
+### 使い方
+
+```clojure
+(require '[adapters.read-only :as ro] '[clojure.edn :as edn] '[datascript.core :as d])
+(def schema  (edn/read-string (slurp "schema/legislation.edn")))
+(def queries (:queries (edn/read-string (slurp "queries/examples.edn"))))
+
+;; catalog だけ（軽い）
+(def db (d/db-with (d/empty-db schema) (edn/read-string (slurp "data/datascript-tx.edn"))))
+
+;; 必要な法域の corpus だけ足す（全部で 95k 法令 + 646k 辺なので明示的に選ぶ）
+(def jp (ro/load-corpus db "data/corpus/manifest.edn" "jp.go.e-gov.elaws"))
+
+(ro/query jp {:queries queries} :what-amends "jp-elaws:325AC0000000131")
+(ro/text-locator jp "jp-elaws:321CONSTITUTION")
+;; => {:law.text/dataset "jp.go.e-gov.elaws" :law.text/path "raw/laws/321CONSTITUTION.json"
+;;     :law.text/sha256 "c10f73..." :law.text/bytes 81725}
+```
+
+全文が要るときは、その dataset を clone して `datalad get <path>` し、`:law.text/sha256` で照合します。
 
 ## 現在の coverage(2026-07-10)
 

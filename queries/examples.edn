@@ -74,5 +74,115 @@
    :query [:find ?kind (count ?j)
            :in $
            :where [?j :jurisdiction/code _]
-                  [?j :jurisdiction/kind ?kind]]}}
+                  [?j :jurisdiction/kind ?kind]]}
+
+  ;; ---- corpus layer (ADR-2608041800) --------------------------------------
+  ;; These need a db loaded with data/corpus/**; the catalog-only db above
+  ;; answers them with an empty set rather than an error, which is why
+  ;; :corpus-loaded? exists as an explicit check.
+  :corpus-loaded?
+  {:args []
+   :query [:find (count ?e) .
+           :in $
+           :where [?e :law/key _]]}
+  :law-by-key
+  {:args [?key]
+   :query [:find (pull ?e [*]) .
+           :in $ ?key
+           :where [?e :law/key ?key]]}
+  :laws-by-jurisdiction-and-status
+  {:args [?jurisdiction ?status]
+   :query [:find ?key ?title
+           :in $ ?jurisdiction ?status
+           :where [?e :law/jurisdiction ?jurisdiction]
+                  [?e :law/status ?status]
+                  [?e :law/key ?key]
+                  [?e :law/title ?title]]}
+  ;; "What changed this act?" -- the question the amends/cites distinction
+  ;; exists to make answerable.
+  :what-amends
+  {:args [?key]
+   :query [:find ?from ?evidence
+           :in $ ?key
+           :where [?r :law.rel/to ?key]
+                  [?r :law.rel/kind :law.rel/amends]
+                  [?r :law.rel/from ?from]
+                  [(get-else $ ?r :law.rel/evidence "") ?evidence]]}
+  :what-this-amends
+  {:args [?key]
+   :query [:find ?to
+           :in $ ?key
+           :where [?r :law.rel/from ?key]
+                  [?r :law.rel/kind :law.rel/amends]
+                  [?r :law.rel/to ?to]]}
+  :what-repeals
+  {:args [?key]
+   :query [:find ?from ?kind
+           :in $ ?key
+           :where [?r :law.rel/to ?key]
+                  [?r :law.rel/kind ?kind]
+                  [(contains? #{:law.rel/repeals :law.rel/implicitly-repeals} ?kind)]
+                  [?r :law.rel/from ?from]]}
+  ;; Transitive legal basis: an implementing act rests on a basic act which
+  ;; may itself rest on another. This is the recursive dependency walk.
+  :legal-basis-closure
+  {:args [?key]
+   :query [:find ?ancestor
+           :in $ %  ?key
+           :where (basis ?key ?ancestor)]
+   :rules [[(basis ?a ?b)
+            [?r :law.rel/from ?a]
+            [?r :law.rel/kind :law.rel/based-on]
+            [?r :law.rel/to ?b]]
+           [(basis ?a ?b)
+            [?r :law.rel/from ?a]
+            [?r :law.rel/kind :law.rel/based-on]
+            [?r :law.rel/to ?mid]
+            (basis ?mid ?b)]]}
+  :relation-count-by-kind
+  {:args []
+   :query [:find ?kind (count ?r)
+           :in $
+           :where [?r :law.rel/id _]
+                  [?r :law.rel/kind ?kind]]}
+  ;; An edge whose target is not in this projection. Not an error: an
+  ;; amending act absorbed decades ago is legitimately absent, and hiding
+  ;; such edges would misreport the graph as complete.
+  :dangling-edges
+  {:args []
+   :query [:find ?from ?kind ?to
+           :in $
+           :where [?r :law.rel/resolved? false]
+                  [?r :law.rel/from ?from]
+                  [?r :law.rel/kind ?kind]
+                  [?r :law.rel/to ?to]]}
+  ;; Every law entity must address its text by sha256 in a named dataset --
+  ;; this projection stores no text of its own.
+  :text-address
+  {:args [?key]
+   :query [:find [?dataset ?path ?sha ?bytes]
+           :in $ ?key
+           :where [?e :law/key ?key]
+                  [?e :law.text/dataset ?dataset]
+                  [(get-else $ ?e :law.text/path "") ?path]
+                  [?e :law.text/sha256 ?sha]
+                  [?e :law.text/bytes ?bytes]]}
+  :corpus-coverage-by-jurisdiction
+  {:args []
+   :query [:find ?jurisdiction (count ?e)
+           :in $
+           :where [?e :law/key _]
+                  [?e :law/jurisdiction ?jurisdiction]]}
+  ;; Joins the corpus back to the catalog: a law's source must be a
+  ;; :legal-source row that has been graded for licence. This is the join
+  ;; that makes one ref worth having.
+  :corpus-source-license
+  {:args [?key]
+   :query [:find [?source-id ?license ?tier]
+           :in $ ?key
+           :where [?e :law/key ?key]
+                  [?e :law/source-id ?source-id]
+                  [?s :legal-source/id ?source-id]
+                  [?s :legal-source/license ?license]
+                  [?s :legal-source/license-tier ?tier]]}}
  :usage "(require '[datascript.core :as d] '[clojure.edn :as edn]) (def db (d/db-with (d/empty-db (edn/read-string (slurp \"schema/legislation.edn\"))) (edn/read-string (slurp \"data/datascript-tx.edn\")))) (d/q (:query (get-in (edn/read-string (slurp \"queries/examples.edn\")) [:queries :sources-by-jurisdiction])) db \"JPN\")"}

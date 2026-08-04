@@ -14,7 +14,11 @@
 
 (def allowed-docs
   #{:doc/adr-2605262800 :doc/kotodama-py-legal-sensors-readme :doc/hanrei-claude-md
-    :doc/hanrei-actor-manifest})
+    :doc/hanrei-actor-manifest
+    ;; com-junkawasaki/root 90-docs/adr/2608041800-global-legislation-full-text-corpus.edn
+    ;; -- the decision that stood up the four locked DataLad text datasets.
+    ;; Rows citing it are the ones whose :legal-source/dataset points at one.
+    :doc/adr-2608041800})
 
 (let [sources (:sources (read-edn "data/seed/legal-sources.edn"))
       prohibited-names (map :prohibited-source/name

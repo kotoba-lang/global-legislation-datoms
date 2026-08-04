@@ -15,6 +15,10 @@
  :legal-source/provenance-doc {}
  :legal-source/scrutiny {}
  :legal-source/hanrei-court-code {:db/index true}
+ ;; Present only on :status/ingested rows: the DataLad dataset repository that
+ ;; holds this source's preserved bytes (ADR-2608041800).
+ :legal-source/dataset {:db/index true}
+ :legal-source/ingested-class {}
 
  :legislature/id {:db/unique :db.unique/identity}
  :legislature/jurisdiction {:db/index true}
@@ -39,6 +43,60 @@
  :prohibited-source/id {:db/unique :db.unique/identity}
  :prohibited-source/name {}
  :prohibited-source/reason {}
+
+ ;; ---- corpus layer (ADR-2608041800) --------------------------------------
+ ;; A :law entity is one legislative instrument. It carries the ADDRESS of its
+ ;; full text, never the text: the bytes live in a locked DataLad dataset and
+ ;; are named by :law.text/sha256, so this projection stays queryable without
+ ;; a `datalad get` and a consumer can still verify custody of what it reads.
+ :law/key {:db/unique :db.unique/identity}
+ :law/jurisdiction {:db/index true}
+ :law/source-id {:db/index true}
+ :law/local-id {:db/index true}
+ :law/kind {:db/index true}
+ :law/status {:db/index true}
+ :law/number {}
+ :law/title {}
+ :law/abbrev {}
+ :law/category {:db/index true}
+ :law/lang {}
+ :law/url {}
+ :law/eli {}
+ :law/resource-type {:db/index true}
+ :law/revision-id {}
+ :law/promulgated-at {:db/index true}
+ :law/effective-at {}
+ :law/introduced-at {}
+ :law/repealed-at {}
+ :law/revised-as-of {}
+ :law.text/dataset {:db/index true}
+ :law.text/path {}
+ :law.text/archive {}
+ :law.text/entry {}
+ :law.text/sha256 {:db/index true}
+ :law.text/bytes {}
+ :law.text/format {}
+ :law.text/lang {}
+ :law.text/version-count {}
+
+ ;; ---- dependency edges ---------------------------------------------------
+ ;; Edges are their own entities holding STRING endpoints, not :db.type/ref.
+ ;; A ref would be the more idiomatic modelling and is wrong here: an edge
+ ;; routinely points at an act that is NOT in this projection -- an amending
+ ;; act absorbed decades ago, or a repealed instrument whose repeal is exactly
+ ;; the fact worth recording. With refs, every such edge would either fail to
+ ;; transact or silently conjure an empty entity. String endpoints let a
+ ;; dangling edge stay honestly dangling, and :law.rel/resolved? says whether
+ ;; the target is present here, so a consumer never has to guess.
+ :law.rel/id {:db/unique :db.unique/identity}
+ :law.rel/from {:db/index true}
+ :law.rel/to {:db/index true}
+ :law.rel/kind {:db/index true}
+ :law.rel/provenance {:db/index true}
+ :law.rel/source-id {:db/index true}
+ :law.rel/evidence {}
+ :law.rel/at {}
+ :law.rel/resolved? {:db/index true}
 
  :hanrei.coverage/id {:db/unique :db.unique/identity}
  :hanrei.coverage/as-of {}
