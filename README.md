@@ -5,7 +5,7 @@
 | 層 | 何を答えるか | 件数 |
 |---|---|---|
 | **catalog** | どの法域にどんな一次ソースがあり、どのライセンスか | 567 entity |
-| **corpus** | 個々の法令そのもの、その全文の所在、**法令間の依存関係** | 95,194 法令 / 646,468 辺 |
+| **corpus** | 個々の法令そのもの、その全文の所在、**法令間の依存関係** | 95,194 法令 / 646,468 辺 / 全文 3.43 GB |
 
 **この repository は法令の全文を 1 バイトも持ちません。**全文は出所ごとの DataLad dataset（下記）にあり、各 `:law` entity は `:law.text/sha256` でそれを名指しします。`data/quality-report.edn` の `:quality/text-bytes-held-here` は **0 を上限とする gate** で、この分離が壊れたら CI が落ちます。
 
@@ -28,10 +28,13 @@
 
 | dataset | 法域 | 法令 | うち全文あり | 依存辺 |
 |---|---|---|---|---|
-| `etzhayyim/jp.go.e-gov.elaws` | JPN | 9,536 | **9,536**（e-Gov 全件） | 7,793 |
+| `etzhayyim/jp.go.e-gov.elaws` | JPN | 9,536 | **9,523**（残り 13 は上流が 404） | 7,793 |
 | `etzhayyim/eu.europa.eur-lex` | EU | 64,237 | 1,114（現行指令全件） | **524,077** |
 | `etzhayyim/uk.gov.legislation` | GBR | 3,267 | **3,267**（UKPGA 全件） | 103,333 |
-| `etzhayyim/gov.govinfo.bulkdata` | USA | 18,154 | 17,964 | 11,265 |
+| `etzhayyim/gov.govinfo.bulkdata` | USA | 18,154 | 18,066 | 11,265 |
+| **計** | | **95,194** | **31,970** | **646,468** |
+
+全文は合計 **3,425,189,407 バイト**。辺のうち 370,551 は相手もこの投影内にあり（`:law.rel/resolved? true`）、残り 275,917 は外を指しています——**それを落とさないのが正しい**（廃止された相手を指す辺こそ意味がある）。
 
 **カバレッジは 4 法域であって「全世界」ではありません。** 198 法域の議会・最高裁の台帳は catalog 層に既にあるので、次の法域を足す作業は `bin/build-corpus.cljs` の `datasets` に 1 行足すことに縮んでいます。各 dataset が取っていないもの（EU の規則本文、UK の UKSI と委譲立法、US の第118議会以前と US Code、JP の判例）は、各 dataset の `raw/source-catalog.edn` の `:catalog/known-gaps` に**名指しで**記録してあります——不在から推測させないために。
 

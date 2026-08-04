@@ -55,7 +55,7 @@
       missing-license-basis (count-where #(and (= :general-legal-knowledge (:legal-source/license-provenance %))
                                                 (nil? (:legal-source/license-basis %)))
                                           legal-sources)
-      report {:quality/as-of "2026-07-10"
+      report {:quality/as-of "2026-08-04"
               :quality/entities (count entities)
               :quality/legal-sources (count legal-sources)
               :quality/legislatures (count legislatures)
