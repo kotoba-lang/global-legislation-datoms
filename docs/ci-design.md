@@ -69,17 +69,37 @@ scope until 2026-08-04. It now is — but the text still lives elsewhere.
 of four revision-locked DataLad datasets (`sources.lock.edn`), and each
 `:law` entity addresses its full text by sha256 rather than embedding it.
 
-**These four steps are missing from `.github/workflows/contract.yml` and
-should be added.** The agent that landed the corpus layer could not push
-them: its OAuth token lacks GitHub's `workflow` scope, which blocks a
-`git push` touching a workflow file *and* the Contents API (which answers
-404, not 403). `bin/verify-ci-lock.cljs` reports the four unverified
-sources loudly on every run so this does not fade into the background.
+**These steps are missing from `.github/workflows/contract.yml` and should be
+added.** The agent that landed the corpus layer could not push them: its
+OAuth token lacks GitHub's `workflow` scope, which blocks a `git push`
+touching a workflow file *and* the Contents API (which answers 404, not
+403). `bin/verify-ci-lock.cljs` reports the four unverified sources loudly on
+every run so this does not fade into the background.
 
-Until it is applied, CI reproduces and gates the **catalog** only;
-`data/corpus/**` is committed output that CI does not independently rebuild,
-and `test/corpus_contract.clj` does not run there (it does pass locally —
-run it before landing any corpus change).
+### What CI does and does not check in the meantime
+
+`test/corpus_contract.clj` **does** run in CI, chained from the end of
+`test/query_contract.clj` — a deliberate, labelled workaround, because that
+file *is* pushable and `contract.yml` already runs it. That works because the
+corpus contract needs nothing checked out: it reads `data/corpus/**` and
+`data/quality-report.edn`, both committed. So CI verifies the corpus's shard
+manifest, its coverage floors, every text address's shape, the edge
+**direction** (an inverted `amends` fails), and the join from `:law/source-id`
+back to a graded licence.
+
+What is still **not** checked, precisely: CI does not **re-derive**
+`data/corpus/**` from the locked source datasets, because that genuinely does
+need their `index/` trees checked out. A hand-edited shard that stayed
+internally consistent would pass. `git diff --exit-code -- data` cannot catch
+it either, since nothing regenerates those files during the run.
+
+Applying the YAML below closes that last gap, and the chained `load-file` at
+the bottom of `test/query_contract.clj` should be deleted at the same time.
+The whole thing is one authorization away:
+
+```bash
+gh auth refresh -h github.com -s workflow
+```
 
 Insert after the existing `com-etzhayyim-ooyake` checkout step:
 

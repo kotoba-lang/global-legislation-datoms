@@ -59,3 +59,25 @@
             "query must reject an unpublished/unknown query-id, not silently return nil"))
 
   (println {:status :ok :entities (count tx) :queries (count queries)}))
+
+;; ── corpus contract, chained (TEMPORARY — see docs/ci-design.md) ───────────
+;; test/corpus_contract.clj belongs in its own workflow step. It is loaded from
+;; here because .github/workflows/contract.yml could not be edited: the OAuth
+;; token available when the corpus layer landed lacks GitHub's `workflow`
+;; scope, which blocks a git push touching a workflow file AND the Contents
+;; API (which answers 404, not 403). Chaining it onto a step the workflow
+;; already runs is the only way to get these assertions executed in CI at all.
+;;
+;; This is worth doing because the corpus contract needs NOTHING checked out:
+;; it reads data/corpus/** and data/quality-report.edn, which are committed.
+;; So CI does verify the corpus's integrity, its edge DIRECTION, its text
+;; addresses and its join back to the licence catalog.
+;;
+;; What is still NOT verified, precisely: CI does not RE-DERIVE data/corpus/**
+;; from the locked source datasets, because that does need their index/ trees
+;; checked out. A hand-edited shard that stays internally consistent would
+;; pass. Closing that needs the four checkout steps and the
+;; bin/build-corpus.cljs step in docs/ci-design.md.
+;;
+;; DELETE THIS BLOCK once contract.yml runs test/corpus_contract.clj directly.
+(load-file "test/corpus_contract.clj")
