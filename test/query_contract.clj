@@ -60,24 +60,17 @@
 
   (println {:status :ok :entities (count tx) :queries (count queries)}))
 
-;; ── corpus contract, chained (TEMPORARY — see docs/ci-design.md) ───────────
-;; test/corpus_contract.clj belongs in its own workflow step. It is loaded from
-;; here because .github/workflows/contract.yml could not be edited: the OAuth
-;; token available when the corpus layer landed lacks GitHub's `workflow`
-;; scope, which blocks a git push touching a workflow file AND the Contents
-;; API (which answers 404, not 403). Chaining it onto a step the workflow
-;; already runs is the only way to get these assertions executed in CI at all.
+;; ── corpus contract, chained ──────────────────────────────────────────────
+;; Kept because these two are the LOCAL contract and are meant to run together
+;; before landing a corpus change:
 ;;
-;; This is worth doing because the corpus contract needs NOTHING checked out:
-;; it reads data/corpus/** and data/quality-report.edn, which are committed.
-;; So CI does verify the corpus's integrity, its edge DIRECTION, its text
-;; addresses and its join back to the licence catalog.
+;;   clojure -M test/query_contract.clj
 ;;
-;; What is still NOT verified, precisely: CI does not RE-DERIVE data/corpus/**
-;; from the locked source datasets, because that does need their index/ trees
-;; checked out. A hand-edited shard that stays internally consistent would
-;; pass. Closing that needs the four checkout steps and the
-;; bin/build-corpus.cljs step in docs/ci-design.md.
-;;
-;; DELETE THIS BLOCK once contract.yml runs test/corpus_contract.clj directly.
+;; This chaining originally existed to smuggle the corpus assertions into a
+;; GitHub Actions step. That reason is gone: GitHub Actions is disabled on this
+;; repository (2026-08-05, owner instruction "github は使わない"), and CI of
+;; record is the murakumo mac-mini fleet — see docs/ci-design.md. The fleet
+;; gate does NOT run this file (it needs Datascript, which is a maven dep the
+;; fleet nodes cannot resolve), so what runs here and what runs there are
+;; different checks, deliberately. Both are described in docs/ci-design.md.
 (load-file "test/corpus_contract.clj")

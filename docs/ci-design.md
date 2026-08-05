@@ -1,146 +1,115 @@
 # CI design
 
-This repo has two input classes with different CI treatment (see
-`maturity/scorecard.edn`):
+**CI for this repository is the murakumo mac-mini fleet, not GitHub Actions.**
 
-- **`data/seed/{legal-sources,prohibited-sources,hanrei-coverage}.edn`** —
-  no upstream raw dataset to fetch. There is nothing to check out at a
-  locked revision for this class, because the "source" is a fixed set of
-  already-reviewed docs living in this same monorepo (an ADR, a README, a
-  CLAUDE.md coverage table, an actor manifest).
-- **`:legislature` / `:court` / `:jurisdiction`** — mechanically parsed from
-  the `etzhayyim/com-etzhayyim-ooyake` sibling repo, exactly like a normal
-  `-datoms` repo projects a DataLad source dataset. This class DOES have a
-  locked revision (`sources.lock.edn`), the same pattern
-  `global-energy-datoms` uses for its four statistical sources.
+GitHub Actions is **disabled** here (2026-08-05, owner instruction
+"github は使わない"). The workspace made this call in ADR-2607300900 after every
+workflow in three orgs stopped starting jobs — the runs were not failing, they
+were not running at all, so the repositories looked green while nothing was
+checked. `.github/workflows/contract.yml` is still on disk and is **inert**;
+deleting it needs GitHub's `workflow` OAuth scope, which this workspace's token
+does not have.
 
-The workflow validates that the committed projection is a faithful,
-honestly-scoped rebuild of both classes together:
+## Where the checks live now
 
-1. Verify every `data/seed/legal-sources.edn` row cites an allow-listed
-   monorepo doc, does not name a prohibited vendor, and — for any row
-   graded from general legal knowledge rather than an in-repo doc — carries
-   its required `:legal-source/license-basis`
-   (`bin/verify-seed-provenance.cljs`).
-2. Verify `sources.lock.edn`'s pinned `etzhayyim/com-etzhayyim-ooyake`
-   revision matches the `ref:` the workflow actually checks out
-   (`bin/verify-ci-lock.cljs`).
-3. Check out `etzhayyim/com-etzhayyim-ooyake` at that locked revision into
-   `.sources/com-etzhayyim-ooyake`.
-4. Rebuild the Datascript transaction EDN and Kotoba EAVT export from
-   `data/seed/*.edn` plus the locked ooyake checkout
-   (`bin/build.cljs .sources`).
-5. Fail if generated files differ from committed output.
-6. Rebuild the quality report and assert `:quality/text-bytes-held-here` is
-   pinned at `0` — the one invariant this repo must never silently violate,
-   since it is what keeps a *projection* of a corpus from turning into a
-   second copy of one — and that `:quality/tier-unspecified` is `0` (every
-   legal-source row has a real license grading, not a placeholder).
+| layer | what runs it | what it checks |
+|---|---|---|
+| **fleet gate** | `scripts/fleet-ci/gates/legislation-corpus-check.cljs` in `com-junkawasaki/root`, registered in `scripts/fleet-ci/gates.edn` | the **committed projection**, on every tip change |
+| **local contract** | `clojure -M test/query_contract.clj` (chains `test/corpus_contract.clj`) | the projection **loaded into a real Datascript db** |
+| **local rebuild** | `bin/verify-seed-provenance.cljs` → `bin/verify-ci-lock.cljs` → `bin/build.cljs` → `bin/build-corpus.cljs` → `bin/build-quality-report.cljs` → `git diff --exit-code -- data` | that the committed output is what the generators produce |
 
-   (Through 2026-07-10 this gate was named `:quality/ingested-full-text`.
-   That one number asserted two different things — "this repo holds no
-   text" and "no text has been ingested anywhere" — and the second stopped
-   being true when ADR-2608041800 landed four full-text datasets. The first
-   is still the invariant and is now named for what it actually checks.)
-7. Materialize the Datascript database and run the query/coverage
-   invariants in `test/query_contract.clj`, including that all 8 of
-   hanrei's named international courts are present. Snapshot rebuild and
-   projection use NBB; the Datascript compatibility test uses the canonical
-   Clojure Datascript library (same split as `global-energy-datoms`).
-8. Verify `coverage/registry.edn` — a hand-maintained overview, NOT
-   part of the `bin/build.cljs` pipeline — has not silently drifted from
-   `data/seed/legal-sources.edn`: its jurisdiction-code set must match
-   exactly, and every jurisdiction's `:coverage/wave-1-sources` must be
-   exactly that jurisdiction's `wave/w1` rows, no more and no less
-   (`test/coverage_registry_contract.clj`).
+Run all three before landing a change. The fleet runs the first one for you.
 
-Growing the `legal-source` catalog (adding a jurisdiction, correcting a
-URL, adding a family, grading a license) is a normal PR that edits
-`data/seed/legal-sources.edn` and lets CI rebuild + verify the derived
-files. Growing `:legislature`/`:court`/`:jurisdiction` coverage requires no
-edit here at all — it tracks whatever `etzhayyim/com-etzhayyim-ooyake`
-registers, gated only by advancing `sources.lock.edn`'s pinned revision.
+## The fleet gate
 
-## The corpus layer, and the CI gap it currently has (ADR-2608041800)
+Registered in `scripts/fleet-ci/gates.edn` as
+`{:name "global-legislation-datoms" :gate :nbb-script :cd true}`. On every tip
+change `tick.cljs` ships an `.edn`-only tarball of the repo to a fleet node,
+runs the gate there, signs a receipt into the append-only
+`manifest/fleet-ci.edn`, and — because `:cd true` — advances this repo's west
+pin when green.
 
-Landing actual ingested legal *text* was explicitly **not** in this repo's
-scope until 2026-08-04. It now is — but the text still lives elsewhere.
-`data/corpus/**` is built by `bin/build-corpus.cljs` from the `index/` layer
-of four revision-locked DataLad datasets (`sources.lock.edn`), and each
-`:law` entity addresses its full text by sha256 rather than embedding it.
+It checks:
 
-**These steps are missing from `.github/workflows/contract.yml` and should be
-added.** The agent that landed the corpus layer could not push them: its
-OAuth token lacks GitHub's `workflow` scope, which blocks a `git push`
-touching a workflow file *and* the Contents API (which answers 404, not
-403). `bin/verify-ci-lock.cljs` reports the four unverified sources loudly on
-every run so this does not fade into the background.
+1. **Every declared shard's sha256 and byte count match `data/corpus/manifest.edn`.**
+   This is the point of the gate. It catches a shard edited after it was
+   generated — including one edited *consistently*, which no amount of reading
+   the committed values can detect.
+2. Every shard's entity count matches the manifest.
+3. `data/quality-report.edn` floors: corpus source/law/relation counts, and
+   `:quality/text-bytes-held-here` = 0 (this repo projects a corpus, it must
+   never store one).
+4. The manifest's per-source totals agree with the quality report's.
+5. On the JP shard (the one source whose text layer is complete as a class):
+   `:law/key` and `:law.rel/id` uniqueness, well-formed text addresses, exactly
+   13 laws without text (the ids e-Gov itself 404s), and **edge direction** —
+   the Constitution of Japan has never been amended, so an incoming `amends`
+   edge means `from`/`to` got swapped, a bug no row count can see.
+6. The corpus→catalog join: every `:law/source-id` resolves to a
+   `:legal-source/id` that is `:status/ingested` and names a dataset. Without
+   this, "under what licence may I use this text?" silently returns nothing.
+7. `schema/legislation.edn` declares the corpus attributes.
 
-### What CI does and does not check in the meantime
+**Why it is not a `:jvm-test` gate**, measured rather than assumed: the local
+contract needs Datascript, which is a maven dependency. Fleet nodes reach only
+the tailnet — no outbound HTTPS — and `~/.m2/repository/datascript/` exists on
+neither `zebulun` nor `asher` (checked 2026-08-05). `clojure -M:test` would die
+in dependency resolution. `ship-git-deps!` carries git deps to nodes, not maven
+ones. So the gate asserts everything that holds without a Datalog engine, and
+the Datascript assertions stay in the local contract.
 
-`test/corpus_contract.clj` **does** run in CI, chained from the end of
-`test/query_contract.clj` — a deliberate, labelled workaround, because that
-file *is* pushable and `contract.yml` already runs it. That works because the
-corpus contract needs nothing checked out: it reads `data/corpus/**` and
-`data/quality-report.edn`, both committed. So CI verifies the corpus's shard
-manifest, its coverage floors, every text address's shape, the edge
-**direction** (an inverted `amends` fails), and the join from `:law/source-id`
-back to a graded licence.
+**What the gate does not check**, stated rather than left to be inferred: the
+EU/UK/US shards are verified by sha256 and entity count only, not parsed for
+semantics (646,468 edges take minutes to read with edamame, and sha256 already
+detects tampering). And nothing **re-derives** `data/corpus/**` from the locked
+source datasets — that needs their `index/` trees on a node.
 
-What is still **not** checked, precisely: CI does not **re-derive**
-`data/corpus/**` from the locked source datasets, because that genuinely does
-need their `index/` trees checked out. A hand-edited shard that stayed
-internally consistent would pass. `git diff --exit-code -- data` cannot catch
-it either, since nothing regenerates those files during the run.
+## The three input classes
 
-Applying the YAML below closes that last gap, and the chained `load-file` at
-the bottom of `test/query_contract.clj` should be deleted at the same time.
-The whole thing is one authorization away:
+- **`data/seed/{legal-sources,prohibited-sources,hanrei-coverage}.edn`** — no
+  upstream raw dataset to fetch. The "source" is a fixed set of already-reviewed
+  docs in this same monorepo (an ADR, a README, a CLAUDE.md coverage table, an
+  actor manifest). `bin/verify-seed-provenance.cljs` checks that every row cites
+  an allow-listed one of them, names no prohibited vendor, and — for a row
+  graded from general legal knowledge rather than an in-repo doc — carries its
+  `:legal-source/license-basis`.
+- **`:legislature` / `:court` / `:jurisdiction`** — mechanically parsed from the
+  `etzhayyim/com-etzhayyim-ooyake` sibling repo at a locked revision
+  (`sources.lock.edn`), the same pattern `global-energy-datoms` uses for its
+  four statistical sources.
+- **corpus (`:law` / `:law.rel`)** — projected from the `index/` layer of four
+  locked DataLad datasets (ADR-2608041800). Each `:law` addresses its full text
+  by sha256; the bytes live in git-annex/B2, never here.
 
-```bash
-gh auth refresh -h github.com -s workflow
-```
+`:quality/text-bytes-held-here` was called `:quality/ingested-full-text` through
+2026-07-10. That one number asserted two different things — "this repo holds no
+text" and "no text has been ingested anywhere" — and the second stopped being
+true when ADR-2608041800 landed four full-text datasets. The first is still the
+invariant and is now named for what it actually checks.
 
-Insert after the existing `com-etzhayyim-ooyake` checkout step:
+## The local contract
 
-```yaml
-      # Corpus source datasets. Only index/ is read; raw/ is git-annex
-      # content in B2 and a plain checkout leaves it as dangling symlinks,
-      # which is correct — rebuilding this projection must never require
-      # downloading 3.43 GB of statutory text.
-      - uses: actions/checkout@v4
-        with:
-          repository: etzhayyim/jp.go.e-gov.elaws
-          ref: 2e601624979d0692c32bde83ca824b7b86380e3c
-          path: .sources/jp.go.e-gov.elaws
-      - uses: actions/checkout@v4
-        with:
-          repository: etzhayyim/eu.europa.eur-lex
-          ref: eed2847ef56d2088e1421ec590c3d67706c3dd15
-          path: .sources/eu.europa.eur-lex
-      - uses: actions/checkout@v4
-        with:
-          repository: etzhayyim/uk.gov.legislation
-          ref: c212340d56878bbacc5c12db34b405ad003fb94e
-          path: .sources/uk.gov.legislation
-      - uses: actions/checkout@v4
-        with:
-          repository: etzhayyim/gov.govinfo.bulkdata
-          ref: 49da746ef00539b0e4e1622731779afb786ed7b1
-          path: .sources/gov.govinfo.bulkdata
-```
+`clojure -M test/query_contract.clj` runs the catalog contract and then chains
+`test/corpus_contract.clj`. That covers what the fleet gate structurally cannot:
+the schema and transaction data are loaded into a real Datascript db, published
+queries are executed through `adapters/read_only.clj`, and the read-only
+boundary is asserted to *reject* malformed consumers and unpublished query ids.
+`test/coverage_registry_contract.clj` checks that the hand-maintained
+`coverage/registry.edn` has not drifted from `data/seed/legal-sources.edn`.
 
-and these two run steps — the first before `Build coverage-quality report`
-(so the freshness diff covers `data/corpus`), the second after the existing
-query contract:
+## Growing coverage
 
-```yaml
-      - name: Rebuild corpus projection from locked source-dataset indexes
-        run: npx nbb bin/build-corpus.cljs .sources
-      - name: Exercise corpus + dependency-graph query contract
-        run: clojure -M test/corpus_contract.clj
-```
+Growing the `legal-source` catalog (adding a jurisdiction, correcting a URL,
+adding a family, grading a licence) is a normal PR that edits
+`data/seed/legal-sources.edn` and lets the generators rebuild the derived files.
+Growing `:legislature`/`:court`/`:jurisdiction` needs no edit here at all — it
+tracks whatever `com-etzhayyim-ooyake` registers, gated only by advancing the
+pinned revision. Adding a corpus jurisdiction is one row in
+`bin/build-corpus.cljs`'s `datasets` plus one DataLad dataset.
 
-Then flip `:source/ci-checkout` to `true` (or drop the key) on the four
-corpus rows in `sources.lock.edn`; `bin/verify-ci-lock.cljs` will start
-asserting their revisions and stop warning.
+## If someone re-enables GitHub Actions
+
+Don't, without a reason — ADR-2607300900 is the standing decision. If it happens
+anyway, `bin/verify-ci-lock.cljs` will already have been reporting any revision
+in the inert `contract.yml` that disagrees with `sources.lock.edn`, so the trap
+is visible before it fires.

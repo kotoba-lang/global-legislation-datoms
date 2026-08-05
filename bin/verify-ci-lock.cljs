@@ -1,30 +1,61 @@
 #!/usr/bin/env nbb
-;; Asserts that every source in sources.lock.edn marked :source/ci-checkout
-;; (default true) is actually checked out at that exact revision by
-;; .github/workflows/contract.yml.
+;; Checks sources.lock.edn against the CI that actually verifies this
+;; repository.
 ;;
-;; A source may opt out with :source/ci-checkout false. That is NOT a way to
-;; make a gap go away: an opted-out source is reported loudly on every run,
-;; because "CI does not verify this input" has to stay visible. See the
-;; comment in sources.lock.edn for why the four corpus datasets are currently
-;; opted out.
+;; That CI is the **murakumo mac-mini fleet** (`scripts/fleet-ci/` in
+;; com-junkawasaki/root), not GitHub Actions. Actions is DISABLED on this
+;; repository as of 2026-08-05 (owner instruction "github は使わない";
+;; workspace decision ADR-2607300900, taken after every workflow in three orgs
+;; stopped starting jobs). `.github/workflows/contract.yml` is still on disk
+;; and is INERT -- deleting it needs GitHub's `workflow` OAuth scope, which
+;; this workspace's token does not have.
+;;
+;; What that changes here: the old version asserted that every locked revision
+;; appeared as a `ref:` in contract.yml, because Actions checked those sources
+;; out. Nothing checks them out now -- the fleet gate
+;; (gates/legislation-corpus-check.cljs) verifies the COMMITTED projection
+;; instead, by sha256. Keeping the old assertion would leave a check that
+;; passes without testing anything, which is worse than no check.
+;;
+;; What it asserts now:
+;;   - the lock is well formed (every row names a repository and a 40-hex sha)
+;;   - the inert workflow is not a trap: if it still pins a locked source at a
+;;     DIFFERENT revision, say so now rather than when someone re-enables
+;;     Actions
 (require '[clojure.string :as str] '[edamame.core :as edn])
 (def fs (js/require "fs"))
-(let [lock (edn/parse-string (.toString (.readFileSync fs "sources.lock.edn")))
-      workflow (.toString (.readFileSync fs ".github/workflows/contract.yml"))
-      {checked true unchecked false}
-      (group-by #(not= false (:source/ci-checkout %)) (:sources lock))]
-  (doseq [{:keys [repository revision]} checked]
-    (assert (str/includes? workflow (str "repository: " repository))
-            (str repository " is locked but not checked out by CI"))
-    (assert (str/includes? workflow (str "ref: " revision))
-            (str repository " is checked out by CI at a revision other than the locked " revision)))
-  (when (seq unchecked)
-    (binding [*out* *err*]
-      (println (str "WARNING: " (count unchecked) " locked source(s) are NOT verified by CI:"))
-      (doseq [{:keys [repository revision]} unchecked]
-        (println (str "  - " repository " @ " revision)))
-      (println "  The projection built from them is committed output that CI does not")
-      (println "  independently reproduce. See sources.lock.edn and docs/ci-design.md.")))
-  (println (str "verified " (count checked) " locked CI source revisions ("
-                (count unchecked) " opted out and reported above)")))
+
+(def lock (edn/parse-string (.toString (.readFileSync fs "sources.lock.edn"))))
+(def sources (:sources lock))
+(def workflow-path ".github/workflows/contract.yml")
+
+(def problems (atom []))
+(defn bad! [& xs] (swap! problems conj (str/join " " (map str xs))))
+
+(doseq [{:keys [repository revision] :as row} sources]
+  (when-not (and (string? repository) (str/includes? (str repository) "/"))
+    (bad! "lock row has no usable :repository:" (pr-str row)))
+  (when-not (re-matches #"[0-9a-f]{40}" (str revision))
+    (bad! repository "has a revision that is not a 40-hex sha:" (pr-str revision))))
+
+(when (.existsSync fs workflow-path)
+  (let [wf (.toString (.readFileSync fs workflow-path))]
+    (doseq [{:keys [repository revision]} sources
+            :when (str/includes? wf (str "repository: " repository))]
+      (when-not (str/includes? wf (str "ref: " revision))
+        (bad! "inert" workflow-path "pins" repository
+              "at a revision other than the locked" revision
+              "-- fix or delete it before re-enabling Actions")))))
+
+(println (str "lock: " (count sources) " source(s). CI of record = murakumo fleet-ci "
+              "(scripts/fleet-ci/gates.edn, gate legislation-corpus-check)."))
+(when (.existsSync fs workflow-path)
+  (binding [*out* *err*]
+    (println (str "NOTE: " workflow-path " is present but INERT -- GitHub Actions is disabled "
+                  "on this repository. Removing the file needs the `workflow` OAuth scope."))))
+(if (seq @problems)
+  (do (binding [*out* *err*]
+        (println (str "FAIL -- " (count @problems) " problem(s):"))
+        (doseq [p @problems] (println "  -" p)))
+      (set! (.-exitCode js/process) 1))
+  (println "OK"))
