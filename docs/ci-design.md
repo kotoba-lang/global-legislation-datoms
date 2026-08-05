@@ -50,13 +50,21 @@ It checks:
    this, "under what licence may I use this text?" silently returns nothing.
 7. `schema/legislation.edn` declares the corpus attributes.
 
-**Why it is not a `:jvm-test` gate**, measured rather than assumed: the local
-contract needs Datascript, which is a maven dependency. Fleet nodes reach only
-the tailnet — no outbound HTTPS — and `~/.m2/repository/datascript/` exists on
-neither `zebulun` nor `asher` (checked 2026-08-05). `clojure -M:test` would die
-in dependency resolution. `ship-git-deps!` carries git deps to nodes, not maven
-ones. So the gate asserts everything that holds without a Datalog engine, and
-the Datascript assertions stay in the local contract.
+**Why it is an `:nbb-script` gate and not `:jvm-test`.** The original reason
+given here was wrong and is worth recording rather than quietly replacing: it
+said fleet nodes reach only the tailnet, so the maven-hosted Datascript
+dependency could never resolve. That came from fleet-ci's own README, which
+recorded **one measurement of one node** (zebulun, 2026-07-26). On 2026-08-05
+all ten reachable nodes were measured directly and `repo1.maven.org` returns
+**200** on every one of them. `:jvm-test` is therefore possible.
+
+The gate stays as it is for a different, and better, reason: the sha256
+comparison, the shard counts and the edge-direction check need no Datalog
+engine, run faster than `clojure -M:test`, and catch a hand-edited shard, which
+is the one thing the Actions design structurally could not. The assertions that
+genuinely need Datascript — that the schema and transaction data load into a
+real db, and that the read-only adapter rejects bad input — stay in the local
+contract, where they belong.
 
 **What the gate does not check**, stated rather than left to be inferred: the
 EU/UK/US shards are verified by sha256 and entity count only, not parsed for
