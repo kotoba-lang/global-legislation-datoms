@@ -8,20 +8,22 @@
   ;; ---- corpus source datasets (ADR-2608041800) ---------------------------
   ;; Only the index/ layer of these is consumed. raw/ is git-annex content
   ;; living in Backblaze B2 and is NOT fetched by this repository or by its
-  ;; CI: a projection must be rebuildable without downloading 2.46 GB of
+  ;; CI: a projection must be rebuildable without downloading 3.43 GB of
   ;; statutory text.
   ;;
-  ;; :source/ci-checkout false on all four, and this is a REAL GAP, not a
-  ;; design choice. .github/workflows/contract.yml needs four more
-  ;; actions/checkout steps and two more run steps (bin/build-corpus.cljs and
-  ;; test/corpus_contract.clj) -- the exact YAML is in docs/ci-design.md. The
-  ;; agent that landed this change could not push it: the OAuth token in use
-  ;; lacks GitHub's `workflow` scope, which blocks both `git push` of a
-  ;; workflow file and the Contents API (the latter answers 404 rather than
-  ;; 403). Until someone with that scope applies it, CI rebuilds and gates the
-  ;; CATALOG only, and data/corpus/** is committed output that CI does not
-  ;; independently reproduce. bin/verify-ci-lock.cljs prints this loudly on
-  ;; every run rather than letting it pass silently.
+  ;; :source/ci-checkout false on all four -- and as of 2026-08-05 that is a
+  ;; DESIGN STATEMENT, not the gap it used to be. CI is the murakumo fleet
+  ;; (scripts/fleet-ci/ in com-junkawasaki/root), and its gate
+  ;; legislation-corpus-check verifies the COMMITTED projection by sha256
+  ;; instead of checking these sources out. That catches a hand-edited shard,
+  ;; which the GitHub Actions design could not: Actions only ever read values
+  ;; that were already committed, so nothing regenerated the files and
+  ;; `git diff --exit-code -- data` stayed silent.
+  ;;
+  ;; What is still not done, stated plainly: nobody RE-DERIVES data/corpus/**
+  ;; from these locked revisions in CI. Doing that needs their index/ trees on
+  ;; a fleet node. The sha256 check makes tampering detectable; it does not
+  ;; make the derivation reproducible.
   {:source/id :source/jp-egov-elaws
    :repository "etzhayyim/jp.go.e-gov.elaws"
    :revision "2e601624979d0692c32bde83ca824b7b86380e3c"
