@@ -1,0 +1,8 @@
+{:schema "etzhayyim.repository/v1"
+ :repository "kotoba-lang/global-legislation-datoms"
+ :kind :public-corpus-query-contract
+ :storage :git
+ :boundary {:owns :public-corpus-and-query-surface
+            :does-not-own :tamaki-organism-runtime}
+ :migration {:from "etzhayyim/global-legislation-datoms"
+             :date "2026-08-11"}}
