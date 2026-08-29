@@ -1,13 +1,12 @@
 (require '[clojure.edn :as edn]
-         '[datascript.core :as d]
+         '[adapters.datalog-runtime :as dr]
          '[adapters.read-only :as read-only])
 
-(let [schema (edn/read-string (slurp "schema/legislation.edn"))
-      tx (edn/read-string (slurp "data/datascript-tx.edn"))
+(let [tx (edn/read-string (slurp "data/datascript-tx.edn"))
       quality (edn/read-string (slurp "data/quality-report.edn"))
       queries (:queries (edn/read-string (slurp "queries/examples.edn")))
-      db (d/db-with (d/empty-db schema) tx)
-      run (fn [k & args] (apply d/q (:query (get queries k)) db args))]
+      db (dr/db tx)
+      run (fn [k & args] (apply dr/q (:query (get queries k)) db args))]
   (assert (>= (:quality/legal-sources quality) 30) "legal-source catalog unexpectedly shrank")
   (assert (>= (:quality/wave-1 quality) 5) "wave-1 anchor sources missing")
   (assert (>= (:quality/legislatures quality) 150) "legislature join table unexpectedly shrank")
