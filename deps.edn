@@ -1,2 +1,3 @@
-{:paths ["."]
- :deps {datascript/datascript {:mvn/version "1.7.8"}}}
+{:paths ["." "adapters"]
+ :deps {io.github.kotoba-lang/datalog {:git/url "https://github.com/kotoba-lang/datalog"
+                                       :git/sha "76daf77bdd57d59b182ed053d2ddfb99b185c7e9"}}}

@@ -1,12 +1,11 @@
 (ns adapters.read-only
   (:require [clojure.edn :as edn]
-            [datascript.core :as d]))
+            [adapters.datalog-runtime :as dr]))
 
 (defn load-db
-  "Loads the published projection into an immutable Datascript value."
+  "Loads the published projection into an immutable datalog store."
   [schema-path tx-path]
-  (d/db-with (d/empty-db (edn/read-string (slurp schema-path)))
-             (edn/read-string (slurp tx-path))))
+  (dr/db (edn/read-string (slurp tx-path))))
 
 (defn corpus-shards
   "The corpus shard files declared by data/corpus/manifest.edn, optionally
@@ -21,27 +20,32 @@
        dataset (filter #(= dataset (:dataset %)))))))
 
 (defn load-corpus
-  "Adds corpus shards to an existing db value.
+  "Adds corpus shards to an existing store value.
 
    Loading the WHOLE corpus is ~95k law entities and ~646k edges; that is a
    real cost and the caller should choose it explicitly, which is why this is
    a separate call from load-db and why `dataset` narrows it. Asking about
    Japanese statutes must not require loading the EU dependency graph."
-  ([db manifest-path] (load-corpus db manifest-path nil))
-  ([db manifest-path dataset]
+  ([store manifest-path] (load-corpus store manifest-path nil))
+  ([store manifest-path dataset]
    (reduce (fn [acc {:keys [path]}]
-             (d/db-with acc (edn/read-string (slurp path))))
-           db
+             (dr/db-with acc (edn/read-string (slurp path))))
+           store
            (corpus-shards manifest-path dataset))))
 
 (defn text-locator
   "Everything needed to fetch and verify one law's full text. This projection
    never holds the bytes -- it holds their address."
-  [db law-key]
-  (let [e (d/pull db [:law/key :law.text/dataset :law.text/path :law.text/archive
-                      :law.text/entry :law.text/sha256 :law.text/bytes :law.text/format]
-                  [:law/key law-key])]
-    (when (:law.text/sha256 e) e)))
+  [store law-key]
+  (let [eid (ffirst (dr/q '[:find ?e
+                            :in $ ?key
+                            :where [?e "law/key" ?key]]
+                          store
+                          law-key))
+        entity (dr/pull store eid
+                        [:law/key :law.text/dataset :law.text/path :law.text/archive
+                         :law.text/entry :law.text/sha256 :law.text/bytes :law.text/format])]
+    (when (:law.text/sha256 entity) entity)))
 
 (defn load-contract [queries-path]
   (edn/read-string (slurp queries-path)))
@@ -52,10 +56,10 @@
    A query that declares :rules is passed them as the `%` input, so recursive
    walks (e.g. :legal-basis-closure) work through the same published-query
    boundary as everything else -- a consumer never supplies its own rules."
-  [db contract query-id & args]
+  [store contract query-id & args]
   (let [spec (get-in contract [:queries query-id])]
     (assert spec (str "unknown published query: " query-id))
-    (apply d/q (:query spec) db (concat (when-let [r (:rules spec)] [r]) args))))
+    (apply dr/q (:query spec) store (concat (when-let [r (:rules spec)] [r]) args))))
 
 (defn require-provenance!
   "Rejects a consumer profile that does not declare the required lineage fields."

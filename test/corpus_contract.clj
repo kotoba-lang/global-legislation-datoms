@@ -11,11 +11,10 @@
 ;; a licence, would pass a naive "did we load 95k rows?" check.
 (require '[clojure.edn :as edn]
          '[clojure.string :as str]
-         '[datascript.core :as d]
+         '[adapters.datalog-runtime :as dr]
          '[adapters.read-only :as read-only])
 
-(let [schema (edn/read-string (slurp "schema/legislation.edn"))
-      catalog (edn/read-string (slurp "data/datascript-tx.edn"))
+(let [catalog (edn/read-string (slurp "data/datascript-tx.edn"))
       quality (edn/read-string (slurp "data/quality-report.edn"))
       manifest (edn/read-string (slurp "data/corpus/manifest.edn"))
       queries (:queries (edn/read-string (slurp "queries/examples.edn")))
@@ -46,7 +45,7 @@
   ;; assert structural properties would make this test cost minutes for no
   ;; extra signal. Japan is the source whose text layer is 100% complete, so
   ;; it is the one where a text-address regression is unambiguous.
-  (let [db (-> (d/db-with (d/empty-db schema) catalog)
+  (let [db (-> (dr/db catalog)
                (read-only/load-corpus "data/corpus/manifest.edn" "jp.go.e-gov.elaws"))
         run (fn [k & args] (apply read-only/query db {:queries queries} k args))
         n-laws (run :corpus-loaded?)]
@@ -74,10 +73,10 @@
     ;; bound: a *drop* means upstream published something and this projection
     ;; should be refreshed, and a *rise* means the fetch regressed. Either way
     ;; someone has to look, which is the point.
-    (let [missing (or (d/q '[:find (count ?e) .
-                             :where [?e :law/jurisdiction "JPN"]
-                                    [?e :law/key _]
-                                    [(missing? $ ?e :law.text/sha256)]]
+    (let [missing (or (dr/q '[:find (count ?e) .
+                             :where [?e "law/jurisdiction" "JPN"]
+                                    [?e "law/key" _]
+                                    [(missing? $ ?e "law.text/sha256")]]
                            db)
                       0)]
       (assert (= 13 missing)
@@ -96,9 +95,9 @@
                    " -- amends edge direction is inverted")))
     ;; ...but the corpus as a whole must have amendment targets, or the above
     ;; assertion is passing for the wrong reason (an empty edge set).
-    (let [some-amended (d/q '[:find (count ?r) .
-                              :where [?r :law.rel/kind :law.rel/amends]
-                                     [?r :law.rel/resolved? true]]
+    (let [some-amended (dr/q '[:find (count ?r) .
+                              :where [?r "law.rel/kind" "law.rel/amends"]
+                                     [?r "law.rel/resolved?" true]]
                             db)]
       (assert (and some-amended (> some-amended 1000))
               (str "only " some-amended " resolved amendment edges -- the graph is not connected")))
@@ -113,10 +112,10 @@
 
     ;; Ingested sources must say so, and must point at the dataset holding
     ;; the bytes -- otherwise :status/ingested is an unbacked claim.
-    (let [ingested (d/q '[:find ?id ?dataset
-                          :where [?e :legal-source/status :status/ingested]
-                                 [?e :legal-source/id ?id]
-                                 [?e :legal-source/dataset ?dataset]]
+    (let [ingested (dr/q '[:find ?id ?dataset
+                          :where [?e "legal-source/status" "status/ingested"]
+                                 [?e "legal-source/id" ?id]
+                                 [?e "legal-source/dataset" ?dataset]]
                         db)]
       (assert (>= (count ingested) 4)
               (str "only " (count ingested) " sources are marked :status/ingested with a dataset")))
