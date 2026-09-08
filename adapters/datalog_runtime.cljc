@@ -8,7 +8,7 @@
   Extends the global-accounts-datoms adapter with DataScript-shaped `pull`,
   `:rules` / `%` inputs, tuple `:find`, and incremental `db-with`."
   (:require [clojure.edn :as edn]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [datalog.core :as dl]
             [datalog.index :as index]))
 
