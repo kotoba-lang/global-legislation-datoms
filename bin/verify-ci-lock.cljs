@@ -22,7 +22,7 @@
 ;;   - the inert workflow is not a trap: if it still pins a locked source at a
 ;;     DIFFERENT revision, say so now rather than when someone re-enables
 ;;     Actions
-(require '[clojure.string :as str] '[edamame.core :as edn])
+(require '[kotoba.lang.text :as str] '[edamame.core :as edn])
 (def fs (js/require "fs"))
 
 (def lock (edn/parse-string (.toString (.readFileSync fs "sources.lock.edn"))))

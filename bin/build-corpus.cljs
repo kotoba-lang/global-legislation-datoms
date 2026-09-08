@@ -24,7 +24,7 @@
 ;;
 ;; Usage: nbb bin/build-corpus.cljs [source-root]
 (ns build-corpus
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [edamame.core :as edn]))
 
 (def fs (js/require "fs"))
