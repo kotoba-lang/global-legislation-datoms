@@ -21,7 +21,7 @@
 ;;    -- every legislature/court/jurisdiction-name row traces to an ooyake
 ;;    :gov.unit/id that a reader can look up directly.
 (ns build
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [edamame.core :as edn]))
 
 (def fs (js/require "fs"))
@@ -71,7 +71,7 @@
   (for [u (:units (read-edn (path ooyake-root "registry/gov-units.world-legislatures.edn")))]
     (compact
      {:legislature/id (str "legislature-" (:gov.unit/jurisdiction u))
-      :legislature/jurisdiction (str/upper-case (:gov.unit/jurisdiction u))
+      :legislature/jurisdiction (str/upper (:gov.unit/jurisdiction u))
       :legislature/name (:gov.unit/name-en u)
       :legislature/official-url (:gov.unit/official-url u)
       :legislature/wikidata (:gov.unit/wikidata u)
@@ -82,7 +82,7 @@
   (for [u (:units (read-edn (path ooyake-root "registry/gov-units.world-courts.edn")))]
     (compact
      {:court/id (str "court-" (:gov.unit/jurisdiction u))
-      :court/jurisdiction (str/upper-case (:gov.unit/jurisdiction u))
+      :court/jurisdiction (str/upper (:gov.unit/jurisdiction u))
       :court/name (:gov.unit/name-en u)
       :court/official-url (:gov.unit/official-url u)
       :court/wikidata (:gov.unit/wikidata u)
@@ -98,7 +98,7 @@
         g20 (:units (read-edn (path ooyake-root "registry/gov-units.g20.edn")))
         country? #(= :country (:gov.unit/level %))
         countries (concat world (filter country? seed) (filter country? g20))]
-    (into {} (map (fn [u] [(str/upper-case (:gov.unit/jurisdiction u)) (:gov.unit/name-en u)]) countries))))
+    (into {} (map (fn [u] [(str/upper (:gov.unit/jurisdiction u)) (:gov.unit/name-en u)]) countries))))
 
 (defn jurisdiction-kind [code country-names]
   (cond

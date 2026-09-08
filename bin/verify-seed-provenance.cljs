@@ -5,7 +5,7 @@
 ;; :name substring (a mechanical guard against ever cataloging a source this
 ;; repo's own prohibited-vendor list forbids).
 (ns verify-seed-provenance
-  (:require [clojure.string :as str]
+  (:require [kotoba.lang.text :as str]
             [edamame.core :as edn]))
 
 (def fs (js/require "fs"))
@@ -36,7 +36,7 @@
       (assert (= :general-legal-knowledge license-provenance)
               (str id " has :license-basis but :license-provenance is not :general-legal-knowledge")))
     (doseq [p prohibited-names]
-      (assert (not (str/includes? (str/lower-case name) (str/lower-case p)))
+      (assert (not (str/includes? (str/lower name) (str/lower p)))
               (str id " (" name ") matches a prohibited vendor: " p))))
   (println (str "verified " (count sources) " legal-source rows against "
                 (count allowed-docs) " allowed provenance docs and "
