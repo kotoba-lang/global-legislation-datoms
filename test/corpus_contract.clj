@@ -10,7 +10,7 @@
 ;; text addresses that point nowhere, or whose source ids do not join back to
 ;; a licence, would pass a naive "did we load 95k rows?" check.
 (require '[clojure.edn :as edn]
-         '[clojure.string :as str]
+         '[kotoba.lang.text :as str]
          '[adapters.datalog-runtime :as dr]
          '[adapters.read-only :as read-only])
 
