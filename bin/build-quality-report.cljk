@@ -5,7 +5,7 @@
 (def fs (js/require "fs"))
 (defn slurp* [p] (.toString (.readFileSync fs p)))
 (defn stabilize
-  "See bin/build.cljs for why: makes pr-str output independent of the host
+  "See bin/build.cljk for why: makes pr-str output independent of the host
    runtime's PersistentHashMap iteration order."
   [x]
   (cond
@@ -31,7 +31,7 @@
       corpus-summary
       (if-not cm
         {:corpus/present? false
-         :corpus/note "data/corpus/manifest.edn absent -- run bin/build-corpus.cljs"}
+         :corpus/note "data/corpus/manifest.edn absent -- run bin/build-corpus.cljk"}
         {:corpus/present? true
          :corpus/sources (count (filter :present? cs))
          :corpus/sources-declared (count cs)

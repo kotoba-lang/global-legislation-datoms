@@ -32,20 +32,20 @@ jobs:
         with:
           cli: latest
       - name: Verify seed provenance against allow-listed docs + prohibited-vendor list
-        run: npx nbb bin/verify-seed-provenance.cljs
+        run: npx nbb bin/verify-seed-provenance.cljk
       - name: Verify CI source lock
-        run: npx nbb bin/verify-ci-lock.cljs
+        run: npx nbb bin/verify-ci-lock.cljk
       - name: Rebuild committed projections from data/seed + locked ooyake revision
-        run: npx nbb bin/build.cljs .sources
+        run: npx nbb bin/build.cljk .sources
       - name: Build coverage-quality report
-        run: npx nbb bin/build-quality-report.cljs
+        run: npx nbb bin/build-quality-report.cljk
       - name: Reject stale generated datoms
         run: git diff --exit-code -- data
       - name: Exercise Datascript query contract
-        run: clojure -M test/query_contract.clj
+        run: clojure -M test/query_contract.cljk
       - name: Verify coverage/registry.edn stays consistent with data/seed
-        run: clojure -M test/coverage_registry_contract.clj
+        run: clojure -M test/coverage_registry_contract.cljk
       - name: Report sources.lock.edn pin freshness (informational, non-blocking)
-        run: npx nbb bin/check-lock-freshness.cljs
+        run: npx nbb bin/check-lock-freshness.cljk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

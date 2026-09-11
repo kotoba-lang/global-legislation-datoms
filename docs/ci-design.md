@@ -15,8 +15,8 @@ does not have.
 | layer | what runs it | what it checks |
 |---|---|---|
 | **fleet gate** | `scripts/fleet-ci/gates/legislation-corpus-check.cljs` in `com-junkawasaki/root`, registered in `scripts/fleet-ci/gates.edn` | the **committed projection**, on every tip change |
-| **local contract** | `clojure -M test/query_contract.clj` (chains `test/corpus_contract.clj`) | the projection **loaded into a real Datascript db** |
-| **local rebuild** | `bin/verify-seed-provenance.cljs` → `bin/verify-ci-lock.cljs` → `bin/build.cljs` → `bin/build-corpus.cljs` → `bin/build-quality-report.cljs` → `git diff --exit-code -- data` | that the committed output is what the generators produce |
+| **local contract** | `clojure -M test/query_contract.cljk` (chains `test/corpus_contract.cljk`) | the projection **loaded into a real Datascript db** |
+| **local rebuild** | `bin/verify-seed-provenance.cljk` → `bin/verify-ci-lock.cljk` → `bin/build.cljk` → `bin/build-corpus.cljk` → `bin/build-quality-report.cljk` → `git diff --exit-code -- data` | that the committed output is what the generators produce |
 
 Run all three before landing a change. The fleet runs the first one for you.
 
@@ -77,7 +77,7 @@ source datasets — that needs their `index/` trees on a node.
 - **`data/seed/{legal-sources,prohibited-sources,hanrei-coverage}.edn`** — no
   upstream raw dataset to fetch. The "source" is a fixed set of already-reviewed
   docs in this same monorepo (an ADR, a README, a CLAUDE.md coverage table, an
-  actor manifest). `bin/verify-seed-provenance.cljs` checks that every row cites
+  actor manifest). `bin/verify-seed-provenance.cljk` checks that every row cites
   an allow-listed one of them, names no prohibited vendor, and — for a row
   graded from general legal knowledge rather than an in-repo doc — carries its
   `:legal-source/license-basis`.
@@ -97,12 +97,12 @@ invariant and is now named for what it actually checks.
 
 ## The local contract
 
-`clojure -M test/query_contract.clj` runs the catalog contract and then chains
-`test/corpus_contract.clj`. That covers what the fleet gate structurally cannot:
+`clojure -M test/query_contract.cljk` runs the catalog contract and then chains
+`test/corpus_contract.cljk`. That covers what the fleet gate structurally cannot:
 the schema and transaction data are loaded into a real Datascript db, published
-queries are executed through `adapters/read_only.clj`, and the read-only
+queries are executed through `adapters/read_only.cljk`, and the read-only
 boundary is asserted to *reject* malformed consumers and unpublished query ids.
-`test/coverage_registry_contract.clj` checks that the hand-maintained
+`test/coverage_registry_contract.cljk` checks that the hand-maintained
 `coverage/registry.edn` has not drifted from `data/seed/legal-sources.edn`.
 
 ## Growing coverage
@@ -113,11 +113,11 @@ adding a family, grading a licence) is a normal PR that edits
 Growing `:legislature`/`:court`/`:jurisdiction` needs no edit here at all — it
 tracks whatever `com-etzhayyim-ooyake` registers, gated only by advancing the
 pinned revision. Adding a corpus jurisdiction is one row in
-`bin/build-corpus.cljs`'s `datasets` plus one DataLad dataset.
+`bin/build-corpus.cljk`'s `datasets` plus one DataLad dataset.
 
 ## If someone re-enables GitHub Actions
 
 Don't, without a reason — ADR-2607300900 is the standing decision. If it happens
-anyway, `bin/verify-ci-lock.cljs` will already have been reporting any revision
+anyway, `bin/verify-ci-lock.cljk` will already have been reporting any revision
 in the inert `contract.yml` that disagrees with `sources.lock.edn`, so the trap
 is visible before it fires.
