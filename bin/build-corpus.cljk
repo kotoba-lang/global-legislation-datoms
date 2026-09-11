@@ -22,7 +22,7 @@
 ;; multi-hundred-megabyte tx file would force every consumer to load the whole
 ;; world to ask about one jurisdiction, and would be unreviewable in a diff.
 ;;
-;; Usage: nbb bin/build-corpus.cljs [source-root]
+;; Usage: nbb bin/build-corpus.cljk [source-root]
 (ns build-corpus
   (:require [kotoba.lang.text :as str]
             [edamame.core :as edn]))

@@ -1,5 +1,5 @@
 ;; coverage/registry.edn is a hand-maintained human-readable overview (README:
-;; "法域ごとの family coverage と安全な結合キー"), NOT part of the bin/build.cljs
+;; "法域ごとの family coverage と安全な結合キー"), NOT part of the bin/build.cljk
 ;; pipeline (build.cljs derives data/*.edn solely from data/seed/*.edn plus the
 ;; mechanically-sourced ooyake legislature/court/jurisdiction data). Nothing
 ;; previously checked it stays consistent with the legal-source catalog it

@@ -63,7 +63,7 @@
 ;; Kept because these two are the LOCAL contract and are meant to run together
 ;; before landing a corpus change:
 ;;
-;;   clojure -M test/query_contract.clj
+;;   clojure -M test/query_contract.cljk
 ;;
 ;; This chaining originally existed to smuggle the corpus assertions into a
 ;; GitHub Actions step. That reason is gone: GitHub Actions is disabled on this
@@ -72,4 +72,4 @@
 ;; gate does NOT run this file (it needs Datascript, which is a maven dep the
 ;; fleet nodes cannot resolve), so what runs here and what runs there are
 ;; different checks, deliberately. Both are described in docs/ci-design.md.
-(load-file "test/corpus_contract.clj")
+(load-file "test/corpus_contract.cljk")

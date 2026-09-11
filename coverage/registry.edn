@@ -27,7 +27,7 @@
  :coverage/hanrei-international-courts
  "hanrei が明記する8国際裁判所 (ICJ/ICC/ECHR/CJEU/IACHR/ACHPR/ITLOS/WTO AB、:doc/hanrei-actor-manifest) は :legal-source/hanrei-court-code タグで全8件カバー済み（ECHR=coe-hudoc、CJEU=eu-cjeu、残り6件は上表の専用 legal-source 行）。"
  :coverage/legislature-court-reference
- "legal-source の16法域を越えて、etzhayyim/com-etzhayyim-ooyake の world-legislatures.edn（186件）・world-courts.edn（144件）を bin/build.cljs が機械的に取り込み、:legislature/* と :court/* として198法域分の実在・検証済み一次機関（議会・最高裁）を保持する。legal-source（ソースのカタログ）を将来これらの法域へ広げる際の候補台帳として使う——legislature/court の存在は、その法域に統治機構があることの確認であって、その法域の法律・判例テキストの一次ソースURL・ライセンスが判明していることを意味しない。"
+ "legal-source の16法域を越えて、etzhayyim/com-etzhayyim-ooyake の world-legislatures.edn（186件）・world-courts.edn（144件）を bin/build.cljk が機械的に取り込み、:legislature/* と :court/* として198法域分の実在・検証済み一次機関（議会・最高裁）を保持する。legal-source（ソースのカタログ）を将来これらの法域へ広げる際の候補台帳として使う——legislature/court の存在は、その法域に統治機構があることの確認であって、その法域の法律・判例テキストの一次ソースURL・ライセンスが判明していることを意味しない。"
  :coverage/join-policy
  {:jurisdiction [:legal-source/jurisdiction :legislature/jurisdiction :court/jurisdiction]
   :rule "legal-source と legislature/court は :jurisdiction コード（ISO3、または EU/COE/UN/ICC/ICJ/IACHR/ACHPR/ITLOS/WTOAB の超国家・国際裁判所コード）でのみ機械的に結合する。国名の文字列一致では結合しない。"}

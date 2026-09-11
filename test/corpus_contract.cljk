@@ -1,6 +1,6 @@
 ;; Corpus + dependency-graph contract (ADR-2608041800).
 ;;
-;; Separate from test/query_contract.clj on purpose. That file asserts the
+;; Separate from test/query_contract.cljk on purpose. That file asserts the
 ;; CATALOG contract and must keep passing on a db that has no corpus loaded at
 ;; all -- the two layers have different costs and different consumers, and
 ;; collapsing them would make every catalog consumer pay for 646k edges.
@@ -22,7 +22,7 @@
       thresholds (:quality/thresholds quality)]
 
   ;; ── manifest-level invariants (cheap, no db needed) ─────────────────────
-  (assert (:corpus/present? corpus) "corpus manifest missing -- run bin/build-corpus.cljs")
+  (assert (:corpus/present? corpus) "corpus manifest missing -- run bin/build-corpus.cljk")
   (assert (>= (:corpus/sources corpus) (:minimum-corpus-sources thresholds))
           (str "corpus sources shrank to " (:corpus/sources corpus)))
   (assert (= (:corpus/sources corpus) (:corpus/sources-declared corpus))
