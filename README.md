@@ -100,11 +100,11 @@
 ## Rebuild
 
 ```bash
-npx nbb bin/verify-seed-provenance.cljk   # legal-source各行が許可済みdocを引用 + license-basis対応 + 禁止ベンダーでないか
-npx nbb bin/verify-ci-lock.cljk           # sources.lock.edn と CI workflow の revision 一致
-npx nbb bin/build.cljk [source-root]      # data/seed/*.edn + ooyake(sibling) → datascript-tx.edn / world-legislation.kotoba.edn / provenance.edn
-npx nbb bin/build-quality-report.cljk     # data/quality-report.edn
-clojure -M test/query_contract.cljk        # Datascript query/coverage 不変条件
+kbb --backend sci bin/verify-seed-provenance.cljk   # legal-source各行が許可済みdocを引用 + license-basis対応 + 禁止ベンダーでないか
+kbb --backend sci bin/verify-ci-lock.cljk           # sources.lock.edn と CI workflow の revision 一致
+kbb --backend sci bin/build.cljk [source-root]      # data/seed/*.edn + ooyake(sibling) → datascript-tx.edn / world-legislation.kotoba.edn / provenance.edn
+kbb --backend sci bin/build-quality-report.cljk     # data/quality-report.edn
+kbb -M test/query_contract.cljk        # Datascript query/coverage 不変条件
 ```
 
 `source-root` 省略時は `..`(= このリポジトリが `orgs/etzhayyim/global-legislation-datoms` として checkout されている west 環境で、sibling の `orgs/etzhayyim/com-etzhayyim-ooyake` を直接参照)。CI は `sources.lock.edn` の revision で ooyake を `.sources/com-etzhayyim-ooyake` に checkout し、`bin/build.cljk .sources` で走らせる。

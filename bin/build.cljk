@@ -1,4 +1,4 @@
-#!/usr/bin/env nbb
+#!/usr/bin/env kbb
 ;; Rebuilds data/datascript-tx.edn + data/world-legislation.kotoba.edn +
 ;; data/provenance.edn.
 ;;

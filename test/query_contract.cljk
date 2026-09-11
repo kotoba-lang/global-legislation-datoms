@@ -63,7 +63,7 @@
 ;; Kept because these two are the LOCAL contract and are meant to run together
 ;; before landing a corpus change:
 ;;
-;;   clojure -M test/query_contract.cljk
+;;   kbb -M test/query_contract.cljk
 ;;
 ;; This chaining originally existed to smuggle the corpus assertions into a
 ;; GitHub Actions step. That reason is gone: GitHub Actions is disabled on this

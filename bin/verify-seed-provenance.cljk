@@ -1,4 +1,4 @@
-#!/usr/bin/env nbb
+#!/usr/bin/env kbb
 ;; Verifies every data/seed/legal-sources.edn row cites one of the allowed,
 ;; already-reviewed monorepo docs, and that none of the four prohibited
 ;; vendors from data/seed/prohibited-sources.edn appear as a :legal-source
