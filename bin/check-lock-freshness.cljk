@@ -1,4 +1,4 @@
-#!/usr/bin/env nbb
+#!/usr/bin/env kbb
 ;; Reports (never auto-updates) whether each sources.lock.edn pin is behind its
 ;; own repository's default branch, via the GitHub compare API -- read-only,
 ;; no live legal-content fetching (that stays out of scope per raw-source-

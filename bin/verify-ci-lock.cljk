@@ -1,4 +1,4 @@
-#!/usr/bin/env nbb
+#!/usr/bin/env kbb
 ;; Checks sources.lock.edn against the CI that actually verifies this
 ;; repository.
 ;;

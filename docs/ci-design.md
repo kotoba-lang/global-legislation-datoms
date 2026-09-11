@@ -15,7 +15,7 @@ does not have.
 | layer | what runs it | what it checks |
 |---|---|---|
 | **fleet gate** | `scripts/fleet-ci/gates/legislation-corpus-check.cljs` in `com-junkawasaki/root`, registered in `scripts/fleet-ci/gates.edn` | the **committed projection**, on every tip change |
-| **local contract** | `clojure -M test/query_contract.cljk` (chains `test/corpus_contract.cljk`) | the projection **loaded into a real Datascript db** |
+| **local contract** | `kbb -M test/query_contract.cljk` (chains `test/corpus_contract.cljk`) | the projection **loaded into a real Datascript db** |
 | **local rebuild** | `bin/verify-seed-provenance.cljk` → `bin/verify-ci-lock.cljk` → `bin/build.cljk` → `bin/build-corpus.cljk` → `bin/build-quality-report.cljk` → `git diff --exit-code -- data` | that the committed output is what the generators produce |
 
 Run all three before landing a change. The fleet runs the first one for you.
@@ -60,7 +60,7 @@ all ten reachable nodes were measured directly and `repo1.maven.org` returns
 
 The gate stays as it is for a different, and better, reason: the sha256
 comparison, the shard counts and the edge-direction check need no Datalog
-engine, run faster than `clojure -M:test`, and catch a hand-edited shard, which
+engine, run faster than `kbb -M:test`, and catch a hand-edited shard, which
 is the one thing the Actions design structurally could not. The assertions that
 genuinely need Datascript — that the schema and transaction data load into a
 real db, and that the read-only adapter rejects bad input — stay in the local
@@ -97,7 +97,7 @@ invariant and is now named for what it actually checks.
 
 ## The local contract
 
-`clojure -M test/query_contract.cljk` runs the catalog contract and then chains
+`kbb -M test/query_contract.cljk` runs the catalog contract and then chains
 `test/corpus_contract.cljk`. That covers what the fleet gate structurally cannot:
 the schema and transaction data are loaded into a real Datascript db, published
 queries are executed through `adapters/read_only.cljk`, and the read-only

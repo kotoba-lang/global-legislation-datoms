@@ -1,4 +1,4 @@
-#!/usr/bin/env nbb
+#!/usr/bin/env kbb
 ;; Builds the CORPUS layer: data/corpus/<source>/laws-NNN.edn and
 ;; relations-NNN.edn, plus data/corpus/manifest.edn.
 ;;
@@ -22,7 +22,7 @@
 ;; multi-hundred-megabyte tx file would force every consumer to load the whole
 ;; world to ask about one jurisdiction, and would be unreviewable in a diff.
 ;;
-;; Usage: nbb bin/build-corpus.cljk [source-root]
+;; Usage: kbb --backend sci bin/build-corpus.cljk [source-root]
 (ns build-corpus
   (:require [kotoba.lang.text :as str]
             [edamame.core :as edn]))
