@@ -1,6 +1,6 @@
 ;; global-legislation-datoms — hanrei's own reported aggregate coverage,
 ;; as a single queryable entity. Verbatim from etzhayyim/root
-;; 60-apps/etzhayyim-project-hanrei/CLAUDE.md "Coverage" table
+;; 60-apps/etzhayyim-project-hanrei/AGENTS.md "Coverage" table
 ;; (2026-03-28 status). Per-jurisdiction legal-system classification is
 ;; NOT reproduced here (only the aggregate counts are on record in-repo);
 ;; do not treat this dataset as a per-country legal-system table.
@@ -15,4 +15,4 @@
   :hanrei.coverage/legal-system-islamic-law 1
   :hanrei.coverage/legal-system-mixed 12
   :hanrei.coverage/jp-court-dids 6
-  :hanrei.coverage/source-repo "etzhayyim/root 60-apps/etzhayyim-project-hanrei/CLAUDE.md"}}
+  :hanrei.coverage/source-repo "etzhayyim/root 60-apps/etzhayyim-project-hanrei/AGENTS.md"}}
