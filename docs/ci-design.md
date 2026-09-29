@@ -76,7 +76,7 @@ source datasets — that needs their `index/` trees on a node.
 
 - **`data/seed/{legal-sources,prohibited-sources,hanrei-coverage}.edn`** — no
   upstream raw dataset to fetch. The "source" is a fixed set of already-reviewed
-  docs in this same monorepo (an ADR, a README, a CLAUDE.md coverage table, an
+  docs in this same monorepo (an ADR, a README, a AGENTS.md coverage table, an
   actor manifest). `bin/verify-seed-provenance.cljk` checks that every row cites
   an allow-listed one of them, names no prohibited vendor, and — for a row
   graded from general legal knowledge rather than an in-repo doc — carries its

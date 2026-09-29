@@ -9,7 +9,7 @@
 ;;                           (per-jurisdiction source list + Tier-A/B/C license grading)
 ;; - :doc/kotodama-py-legal-sensors-readme — kotoba-lang/kotodama-py
 ;;                           src/kotodama/organism/sensors/legal/README.md (wave-1 5-anchor table)
-;; - :doc/hanrei-claude-md — etzhayyim/root 60-apps/etzhayyim-project-hanrei/CLAUDE.md
+;; - :doc/hanrei-claude-md — etzhayyim/root 60-apps/etzhayyim-project-hanrei/AGENTS.md
 ;;                           (explicit e-Gov / kanpo / courts.go.jp URLs)
 ;; - :doc/hanrei-actor-manifest — etzhayyim/com-etzhayyim-hanrei/actor-manifest.jsonld
 ;;                           (convoSystemPrompt: "83 jurisdictions ... 8 international

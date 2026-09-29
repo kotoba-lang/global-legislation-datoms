@@ -39,8 +39,8 @@
   (assert (>= (count (run :general-legal-knowledge-graded-sources)) 15)
           "general-legal-knowledge-graded sources missing their license/basis pair")
   (let [[national international] (run :hanrei-coverage-snapshot)]
-    (assert (= 75 national) "hanrei national-jurisdiction count drifted from CLAUDE.md")
-    (assert (= 8 international) "hanrei international-court count drifted from CLAUDE.md"))
+    (assert (= 75 national) "hanrei national-jurisdiction count drifted from AGENTS.md")
+    (assert (= 8 international) "hanrei international-court count drifted from AGENTS.md"))
   (let [consumer (first (:connections/consumers (edn/read-string (slurp "connections/actors.edn"))))]
     (read-only/require-provenance! consumer)
     (assert (seq (read-only/query db {:queries queries} :wave-1-sources)) "read-only consumer adapter missing"))

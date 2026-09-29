@@ -3,7 +3,7 @@
 ;; own repository's default branch, via the GitHub compare API -- read-only,
 ;; no live legal-content fetching (that stays out of scope per raw-source-
 ;; integrity). Mirrors the superproject's own "pin鮮度" (pin-freshness) check
-;; convention (root CLAUDE.md: "git push/pull/west update の前に... pin が
+;; convention (root AGENTS.md: "git push/pull/west update の前に... pin が
 ;; upstream GitHub の最新から取り残されていないか確認する"). Informational --
 ;; always exits 0; staleness is a freshness question, not a correctness one,
 ;; so this must not block CI on every upstream ooyake commit.
